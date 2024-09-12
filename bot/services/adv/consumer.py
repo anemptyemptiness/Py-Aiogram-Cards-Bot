@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime, timezone, timedelta
 
@@ -73,6 +74,7 @@ class AdvConsumer:
                             chat_id=user.telegram_id,
                             media=pictures_media,
                         )
+                        await asyncio.sleep(1)
                     except Exception:
                         pass
             elif isinstance(pictures, str):
@@ -84,6 +86,7 @@ class AdvConsumer:
                             caption=text,
                             reply_markup=builder.as_markup(),
                         )
+                        await asyncio.sleep(1)
                     except Exception:
                         pass
             else:
@@ -94,6 +97,7 @@ class AdvConsumer:
                             text=text,
                             reply_markup=builder.as_markup(),
                         )
+                        await asyncio.sleep(1)
                     except Exception:
                         pass
             await msg.ack()

@@ -20,12 +20,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot import settings
 from bot.db.buys.requests import BuysDAO
 from bot.db.users.requests import UsersDAO
-from bot.fsm.fsm import MenuSG, CardQuestionSG
+from bot.fsm.fsm import CardQuestionSG
 
 router = Router(name="crystal_question_router")
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "crystal_question")
+@router.callback_query(F.data == "crystal_question")
 async def crystal_question_command(callback: CallbackQuery, state: FSMContext, bot: Bot, session: AsyncSession):
     info_text = ("<b>Ответ на вопрос 💎</b>\n\n"
                  "Сконцентрировавшись на своей сегодняшней ситуации, "
@@ -68,7 +68,7 @@ async def crystal_question_command(callback: CallbackQuery, state: FSMContext, b
     await callback.answer()
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "go_next_crystal_question")
+@router.callback_query(F.data == "go_next_crystal_question")
 async def go_next_crystal_question_handler(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     telegram_id = callback.message.chat.id
     await callback.message.delete_reply_markup()
@@ -201,4 +201,4 @@ async def in_process_ok_command(callback: CallbackQuery, state: FSMContext):
         photo=FSInputFile(path=Path("bot/images/cards/blagodarnost.jpg")),
         reply_markup=builder.as_markup(),
     )
-    await state.set_state(MenuSG.in_menu)
+    await state.clear()

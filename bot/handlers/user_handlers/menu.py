@@ -1,26 +1,23 @@
 from aiogram import Router, F
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.keyboards.user_kb import create_menu_kb
-from bot.fsm.fsm import MenuSG
 
 router = Router(name="menu_router")
 
 
-@router.message(Command(commands="menu"), StateFilter(default_state))
-async def menu_command(message: Message, state: FSMContext):
+@router.message(Command(commands="menu"))
+async def menu_command(message: Message):
     await message.answer(
         text="Вы находитесь в главном меню 🏡",
         reply_markup=create_menu_kb(),
     )
-    await state.set_state(MenuSG.in_menu)
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "go_to_menu")
+@router.callback_query(F.data == "go_to_menu")
 async def menu_callback_button_command(callback: CallbackQuery):
     await callback.message.delete_reply_markup()
     await callback.message.answer(
@@ -30,18 +27,18 @@ async def menu_callback_button_command(callback: CallbackQuery):
     await callback.answer()
 
 
-@router.callback_query(~StateFilter(default_state), F.data == "go_back_to_menu")
+@router.callback_query(F.data == "go_back_to_menu")
 async def go_back_to_menu_from_payment_command(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
     await callback.message.answer(
         text="Вы находитесь в главном меню 🏡",
         reply_markup=create_menu_kb(),
     )
-    await state.set_state(MenuSG.in_menu)
+    await state.clear()
     await callback.answer()
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "go_back_to_menu_from_energy")
+@router.callback_query(F.data == "go_back_to_menu_from_energy")
 async def go_back_to_menu_from_energy_command(callback: CallbackQuery):
     await callback.message.delete_reply_markup()
     await callback.message.edit_text(
@@ -85,7 +82,7 @@ async def site_handler(message: Message):
     )
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "energy_exchange")
+@router.callback_query(F.data == "energy_exchange")
 async def energy_exchange_handler(callback: CallbackQuery):
     await callback.message.delete_reply_markup()
 

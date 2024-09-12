@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from bot.fsm.fsm import MiniDialogSG, MenuSG
+from bot.fsm.fsm import MiniDialogSG
 
 router = Router(name="mini_dialog_router")
 
@@ -113,5 +113,5 @@ async def what_is_crystal_command_again(callback: CallbackQuery, state: FSMConte
              "<b>Я предлагаю Вам несколько способов взаимодействия с Кристаллами Крайона</b>",
         reply_markup=builder.as_markup(),
     )
-    await state.set_state(MenuSG.in_menu)
+    await state.clear()
     await callback.answer()

@@ -13,10 +13,6 @@ class MiniDialogSG(StatesGroup):
     energy = State()
 
 
-class MenuSG(StatesGroup):
-    in_menu = State()
-
-
 class CardPerDaySG(StatesGroup):
     payment = State()
     in_process = State()

@@ -1,19 +1,18 @@
 from aiogram import Router, F
-from aiogram.filters import CommandStart, StateFilter
+from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import default_state
 from aiogram.types import Message, InlineKeyboardButton, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.db.users.requests import UsersDAO
-from bot.fsm.fsm import MiniDialogSG, MenuSG
+from bot.fsm.fsm import MiniDialogSG
 
 router = Router(name="startup_router")
 
 
-@router.message(CommandStart(), StateFilter(default_state))
+@router.message(CommandStart())
 async def start_first_time_handler(message: Message, session: AsyncSession, state: FSMContext):
     user_telegram_id = message.from_user.id
     user = await UsersDAO.get_user(session=session, telegram_id=user_telegram_id)
@@ -44,20 +43,6 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
             text=f'Привет, <a href="{message.from_user.url}">{message.from_user.username}</a>!',
             reply_markup=builder.as_markup(),
         )
-        await state.set_state(MenuSG.in_menu)
-
-
-@router.message(CommandStart(), StateFilter(MenuSG.in_menu))
-async def start_in_menu_handler(message: Message):
-    builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text="Что такое кристаллы? 💎", callback_data="what_is_crystal_btn"))
-    builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_back_to_menu"))
-    builder.row(InlineKeyboardButton(text="Помощь ❤️", callback_data="help_btn"))
-
-    await message.answer(
-        text=f'Привет, <a href="{message.from_user.url}">{message.from_user.username}</a>!',
-        reply_markup=builder.as_markup(),
-    )
 
 
 @router.callback_query(F.data == "go_back_to_start_cmd")
@@ -76,7 +61,7 @@ async def go_back_to_start_cmd_handler(callback: CallbackQuery, session: AsyncSe
     await callback.answer()
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "what_is_crystal_btn")
+@router.callback_query(F.data == "what_is_crystal_btn")
 async def what_is_crystal_btn_handler(callback: CallbackQuery):
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data="go_back_to_start_cmd"))
@@ -97,7 +82,7 @@ async def what_is_crystal_btn_handler(callback: CallbackQuery):
     await callback.answer()
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "help_btn")
+@router.callback_query(F.data == "help_btn")
 async def help_btn_handler(callback: CallbackQuery):
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data="go_back_to_start_cmd"))

@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot import settings
 from bot.db.buys.requests import BuysDAO
 from bot.db.users.requests import UsersDAO
-from bot.fsm.fsm import MenuSG, CardThreeSG
+from bot.fsm.fsm import CardThreeSG
 
 router = Router(name="crystal_3_router")
 
@@ -56,7 +56,7 @@ async def start_card_method(builder: InlineKeyboardBuilder, message: Message, st
     await state.set_state(CardThreeSG.in_process)
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "crystal_3")
+@router.callback_query(F.data == "crystal_3")
 async def crystal_3_command(callback: CallbackQuery, state: FSMContext, bot: Bot, session: AsyncSession):
     info_text = ("<b>Метод 3-х Кристаллов 💎</b>\n\n"
                  "1 Кристалл: Кристалл необходимый для меня сейчас\n"
@@ -100,7 +100,7 @@ async def crystal_3_command(callback: CallbackQuery, state: FSMContext, bot: Bot
     await callback.answer()
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "go_next_crystal_3")
+@router.callback_query(F.data == "go_next_crystal_3")
 async def go_next_crystal_3_handler(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     await callback.message.delete_reply_markup()
     telegram_id = callback.message.chat.id
@@ -184,4 +184,4 @@ async def in_process_ok_command(callback: CallbackQuery, state: FSMContext):
         photo=FSInputFile(path=Path("bot/images/cards/blagodarnost.jpg")),
         reply_markup=builder.as_markup(),
     )
-    await state.set_state(MenuSG.in_menu)
+    await state.clear()

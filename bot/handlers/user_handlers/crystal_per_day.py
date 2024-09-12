@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot import settings
 from bot.db.buys.requests import BuysDAO
 from bot.db.users.requests import UsersDAO
-from bot.fsm.fsm import CardPerDaySG, MenuSG
+from bot.fsm.fsm import CardPerDaySG
 
 router = Router(name="crystal_per_day_router")
 
@@ -37,7 +37,7 @@ async def start_card_method(builder: InlineKeyboardBuilder, message: Message, st
     await state.set_state(CardPerDaySG.in_process)
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "crystal_per_day")
+@router.callback_query(F.data == "crystal_per_day")
 async def crystal_per_day_command(callback: CallbackQuery, state: FSMContext, bot: Bot, session: AsyncSession):
     info_text = ("<b>Кристалл на день 💎</b>\n\n"
                  "Вытяни символ на день, для прояснения жизненной ситуации, для медитации, "
@@ -81,7 +81,7 @@ async def crystal_per_day_command(callback: CallbackQuery, state: FSMContext, bo
     await callback.answer()
 
 
-@router.callback_query(StateFilter(MenuSG.in_menu), F.data == "go_next_crystal_per_day")
+@router.callback_query(F.data == "go_next_crystal_per_day")
 async def go_next_crystal_per_day_handler(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     await callback.message.delete_reply_markup()
     telegram_id = callback.message.chat.id
@@ -165,4 +165,4 @@ async def in_process_ok_command(callback: CallbackQuery, state: FSMContext):
         photo=FSInputFile(path=Path("bot/images/cards/blagodarnost.jpg")),
         reply_markup=builder.as_markup(),
     )
-    await state.set_state(MenuSG.in_menu)
+    await state.clear()
