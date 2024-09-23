@@ -8,4 +8,5 @@ async def set_default_commands(bot: Bot):
         types.BotCommand(command="consultation", description="Индивидуальная консультация 📝"),
         types.BotCommand(command="support", description="Тех. поддержка ⚒"),
         types.BotCommand(command="site", description="Сайт основателя техники 🔗"),
+        types.BotCommand(command="oferta", description="Оферта 📄"),
     ])

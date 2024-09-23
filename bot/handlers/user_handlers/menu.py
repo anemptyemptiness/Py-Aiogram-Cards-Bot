@@ -1,7 +1,9 @@
+from pathlib import Path
+
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot.keyboards.user_kb import create_menu_kb
@@ -101,3 +103,10 @@ async def energy_exchange_handler(callback: CallbackQuery):
         reply_markup=builder.as_markup(),
     )
     await callback.answer()
+
+
+@router.message(Command(commands="oferta"))
+async def oferta_command(message: Message):
+    await message.answer_document(
+        document=FSInputFile(Path("bot/oferta/Оферта.docx")),
+    )
