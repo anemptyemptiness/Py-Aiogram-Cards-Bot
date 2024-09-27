@@ -42,3 +42,5 @@ services:
       nats:
         condition: service_started
     command: sh /service/docker/startup.sh
+    ports:
+      - "8000:8000"
