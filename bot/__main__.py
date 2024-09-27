@@ -1,10 +1,14 @@
 import asyncio
 import logging
 
+import uvicorn
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.enums import ParseMode
+from fastapi import FastAPI
+from nats.aio.client import Client
+from nats.js import JetStreamContext
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from bot.config import settings, redis
@@ -27,7 +31,14 @@ from bot.middlewares.album import AlbumMiddleware
 from bot.middlewares.db import DbSessionMiddleware
 from bot.menu_commands import set_default_commands
 from bot.utils.connect_to_nats import connect_to_nats
-from bot.utils.start_consumers import start_adv_consumer
+from bot.utils.start_consumers import start_adv_consumer, start_payment_consumer
+from bot.services.payment.router import router as payment_app_router
+
+
+async def start_uvicorn(app: FastAPI):
+    config = uvicorn.Config(app=app, host="localhost", port=8000)
+    server = uvicorn.Server(config=config)
+    await server.serve()
 
 
 async def main():
@@ -76,6 +87,11 @@ async def main():
 
     nc, js = await connect_to_nats(servers=settings.NATS_HOST)
 
+    app = FastAPI()
+    app.state.nc = nc
+    app.state.js = js
+    app.include_router(payment_app_router)
+
     await set_default_commands(bot=bot)
     await bot.delete_webhook(drop_pending_updates=True)
 
@@ -84,16 +100,25 @@ async def main():
             dp.start_polling(
                 bot,
                 js=js,
-                consumer=settings.NATS_CONSUMER_SUBJECT,
+                consumer=settings.NATS_CONSUMER_SUBJECT_ADV,
             ),
             start_adv_consumer(
                 nc=nc,
                 js=js,
                 bot=bot,
-                subject=settings.NATS_CONSUMER_SUBJECT,
-                stream=settings.NATS_STREAM,
-                durable_name=settings.NATS_DURABLE_NAME,
-            )
+                subject=settings.NATS_CONSUMER_SUBJECT_ADV,
+                stream=settings.NATS_STREAM_ADV,
+                durable_name=settings.NATS_DURABLE_NAME_ADV,
+            ),
+            start_payment_consumer(
+                nc=nc,
+                js=js,
+                bot=bot,
+                subject=settings.NATS_CONSUMER_SUBJECT_PAYMENT,
+                stream=settings.NATS_STREAM_PAYMENT,
+                durable_name=settings.NATS_DURABLE_NAME_PAYMENT,
+            ),
+            start_uvicorn(app=app),
         )
     except Exception as e:
         logger.exception(e)

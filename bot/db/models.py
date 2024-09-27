@@ -21,6 +21,7 @@ class User(Base):
         server_default=func.now(),
     )
     is_active: Mapped[bool] = mapped_column(default=True)
+    inv_number: Mapped[int] = mapped_column(default=1)
 
     buys: Mapped["Buys"] = relationship(back_populates="user", uselist=False)
 

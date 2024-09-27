@@ -17,7 +17,7 @@ from aiogram.types import (
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot import settings
+from bot.config import settings
 from bot.db.buys.requests import BuysDAO
 from bot.db.users.requests import UsersDAO
 from bot.fsm.fsm import CardQuestionSG

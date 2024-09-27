@@ -3,7 +3,7 @@ from pathlib import Path
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, InlineKeyboardButton, CallbackQuery, FSInputFile
+from aiogram.types import Message, InlineKeyboardButton, CallbackQuery, FSInputFile, Update
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +18,6 @@ router = Router(name="startup_router")
 async def start_first_time_handler(message: Message, session: AsyncSession, state: FSMContext):
     user_telegram_id = message.from_user.id
     user = await UsersDAO.get_user(session=session, telegram_id=user_telegram_id)
-
     builder = InlineKeyboardBuilder()
 
     if not user:

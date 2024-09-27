@@ -8,7 +8,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardButton, Message, InputMed
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from nats.js import JetStreamContext
 
-from bot import settings
+from bot.config import settings
 from bot.callbacks.calendar import MonthToCallbackData, DayToCallbackData, HourToCallbackData, MinuteToCallbackData
 from bot.fsm.fsm import AdminSG, AdminAdvSG
 from bot.keyboards.admin_kb import create_admin_kb

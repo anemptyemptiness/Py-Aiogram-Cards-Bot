@@ -1,4 +1,5 @@
 import random
+from decimal import Decimal
 from pathlib import Path
 
 from aiogram import Router, F, Bot
@@ -8,7 +9,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
-    LabeledPrice,
     PreCheckoutQuery,
     Message,
     FSInputFile,
@@ -17,10 +17,11 @@ from aiogram.types import (
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot import settings
+from bot.config import settings
 from bot.db.buys.requests import BuysDAO
 from bot.db.users.requests import UsersDAO
 from bot.fsm.fsm import CardThreeSG
+from bot.utils.payment import generate_payment_link
 
 router = Router(name="crystal_3_router")
 
@@ -57,7 +58,7 @@ async def start_card_method(builder: InlineKeyboardBuilder, message: Message, st
 
 
 @router.callback_query(F.data == "crystal_3")
-async def crystal_3_command(callback: CallbackQuery, state: FSMContext, bot: Bot, session: AsyncSession):
+async def crystal_3_command(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     info_text = ("<b>Метод 3-х Кристаллов 💎</b>\n\n"
                  "1 Кристалл: Кристалл необходимый для меня сейчас\n"
                  "2 Кристалл: Кристалл помогающий понять нынешнюю ситуацию и изменить ее в данных условиях\n"
@@ -77,23 +78,20 @@ async def crystal_3_command(callback: CallbackQuery, state: FSMContext, bot: Bot
             reply_markup=builder.as_markup(),
         )
     else:
-        builder.add(InlineKeyboardButton(text="Оплатить 150 рублей", pay=True))
+        url = generate_payment_link(
+            merchant_login=settings.ROBOKASSA_MERCHANT_LOGIN,
+            merchant_password_1=settings.ROBOKASSA_TEST_PWD_1,
+            cost=Decimal(1),
+            number=user.inv_number,
+            description="Метод 3-х Кристаллов",
+            shp_user_id=callback.message.chat.id,
+        )
+
+        builder.add(InlineKeyboardButton(text="Оплатить 150 рублей", url=url))
         builder.row(InlineKeyboardButton(text="Назад", callback_data="go_back_to_menu"))
 
         await callback.message.answer(
             text=f"{info_text}",
-        )
-        await bot.send_invoice(
-            chat_id=callback.message.chat.id,
-            title="Метод 3-х Кристаллов 💎",
-            description="Метод 3-х Кристаллов 💎",
-            payload="crystal_3_payment",
-            currency="rub",
-            prices=[
-                LabeledPrice(label="Метод 3-х Кристаллов 💎", amount=15000),
-            ],
-            start_parameter="crystal_3_subscription",
-            provider_token=settings.YOOTOKEN,
             reply_markup=builder.as_markup(),
         )
         await state.set_state(CardThreeSG.payment)
@@ -116,20 +114,13 @@ async def go_next_crystal_3_handler(callback: CallbackQuery, state: FSMContext, 
     await start_card_method(builder, callback.message, state)
 
 
-@router.pre_checkout_query(StateFilter(CardThreeSG.payment))
-async def pre_checkout_handler(checkout: PreCheckoutQuery, session: AsyncSession):
-    await BuysDAO.add_buy(
-        session=session,
-        telegram_id=checkout.from_user.id,
-        total_amount=int(checkout.total_amount / 100),
-    )
-    await checkout.answer(ok=True)
-
-
-@router.message(StateFilter(CardThreeSG.payment), F.content_type == ContentType.SUCCESSFUL_PAYMENT)
-async def successful_handler(message: Message, state: FSMContext):
+@router.callback_query(StateFilter(CardThreeSG.payment), F.data == "go_after_payment")
+async def pre_checkout_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.delete_reply_markup()
     builder = InlineKeyboardBuilder()
-    await start_card_method(builder, message, state)
+
+    await start_card_method(builder, callback.message, state)
 
 
 @router.callback_query(StateFilter(CardThreeSG.in_process), F.data == "in_process_ok")
