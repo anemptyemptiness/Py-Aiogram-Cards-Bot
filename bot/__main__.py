@@ -36,7 +36,7 @@ from bot.services.payment.router import router as payment_app_router
 
 
 async def start_uvicorn(app: FastAPI):
-    config = uvicorn.Config(app=app, host="localhost", port=8000)
+    config = uvicorn.Config(app=app, host="0.0.0.0", port=8000)
     server = uvicorn.Server(config=config)
     await server.serve()
 
