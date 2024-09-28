@@ -1,13 +1,12 @@
 import asyncio
 import logging
-import ipaddress
 
 import uvicorn
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.enums import ParseMode
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from bot.config import settings, redis
@@ -87,7 +86,6 @@ async def main():
     nc, js = await connect_to_nats(servers=settings.NATS_HOST)
 
     app = FastAPI()
-    app.middleware("http")(limit_ip)
     app.state.nc = nc
     app.state.js = js
     app.include_router(payment_app_router)
