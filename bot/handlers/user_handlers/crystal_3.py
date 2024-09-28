@@ -1,5 +1,4 @@
 import random
-from decimal import Decimal
 from pathlib import Path
 
 from aiogram import Router, F

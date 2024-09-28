@@ -33,16 +33,6 @@ from bot.utils.connect_to_nats import connect_to_nats
 from bot.utils.start_consumers import start_adv_consumer, start_payment_consumer
 from bot.services.payment.router import router as payment_app_router
 
-ALLOWED_NETWORK = ipaddress.ip_network("185.59.216.0/24")
-
-
-async def limit_ip(request: Request, call_next):
-    client_ip = ipaddress.ip_address(request.client.host)
-    if client_ip not in ALLOWED_NETWORK:
-        raise HTTPException(status_code=403, detail="Access denied")
-    response = await call_next(request)
-    return response
-
 
 async def start_uvicorn(app: FastAPI):
     config = uvicorn.Config(app=app, host="0.0.0.0", port=8000)
