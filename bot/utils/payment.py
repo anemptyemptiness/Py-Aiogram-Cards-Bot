@@ -53,7 +53,7 @@ def generate_payment_link(
     """
     signature = calculate_signature(
         merchant_login,
-        cost,
+        "",
         number,
         merchant_password_1,
         f"Shp_userId={shp_user_id}",
