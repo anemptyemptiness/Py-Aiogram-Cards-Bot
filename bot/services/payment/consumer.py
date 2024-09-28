@@ -56,7 +56,8 @@ class PaymentConsumer:
 
             await self.bot.send_message(
                 chat_id=user_id,
-                text="Ваша оплата прошла <b>успешно</b> ✅",
+                text="Принимаю с Любовью и Благодарностью ❤️\n"
+                     "Ваша оплата прошла <b>успешно</b> ✅",
                 reply_markup=builder.as_markup(),
             )
         else:
