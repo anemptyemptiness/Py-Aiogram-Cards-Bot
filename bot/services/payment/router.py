@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
 
@@ -34,7 +36,16 @@ async def robokassa_result_url(
             subject=settings.NATS_CONSUMER_SUBJECT_PAYMENT,
             user_id=user_id,
             total_amount=cost,
+            is_success=json.dumps(True)
         )
         return f'OK{number}'
+
+    await payment_publisher(
+        js=js,
+        subject=settings.NATS_CONSUMER_SUBJECT_PAYMENT,
+        user_id=user_id,
+        total_amount=cost,
+        is_success=json.dumps(False)
+    )
     return "bad sign"
 

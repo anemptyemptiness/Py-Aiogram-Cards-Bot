@@ -1,3 +1,5 @@
+import json
+
 from aiogram import Bot
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -38,20 +40,31 @@ class PaymentConsumer:
     async def on_message(self, msg: Msg) -> None:
         user_id = int(msg.headers.get("user_id"))
         total_amount = int(float(msg.headers.get("total_amount")))
+        is_success = json.loads(msg.headers.get("is_success"))
 
         builder = InlineKeyboardBuilder()
-        builder.row(InlineKeyboardButton(text="Продолжить ➡️", callback_data="go_after_payment"))
 
-        async with async_session() as session:
-            await BuysDAO.add_buy(
-                session=session,
-                telegram_id=user_id,
-                total_amount=total_amount,
+        if is_success:
+            builder.row(InlineKeyboardButton(text="Продолжить ➡️", callback_data="go_after_payment"))
+
+            async with async_session() as session:
+                await BuysDAO.add_buy(
+                    session=session,
+                    telegram_id=user_id,
+                    total_amount=total_amount,
+                )
+
+            await self.bot.send_message(
+                chat_id=user_id,
+                text="Ваша оплата прошла <b>успешно</b> ✅",
+                reply_markup=builder.as_markup(),
             )
+        else:
+            builder.row(InlineKeyboardButton(text="◀️ В главное меню", callback_data="go_to_menu"))
 
-        await self.bot.send_message(
-            chat_id=user_id,
-            text="Ваша оплата прошла <b>успешно</b> ✅",
-            reply_markup=builder.as_markup(),
-        )
+            await self.bot.send_message(
+                chat_id=user_id,
+                text="К сожалению, оплата прошла <b>неуспешно</b> ❌",
+                reply_markup=builder.as_markup(),
+            )
         await msg.ack()

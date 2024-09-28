@@ -2,14 +2,12 @@ import random
 from decimal import Decimal
 from pathlib import Path
 
-from aiogram import Router, F, Bot
-from aiogram.enums import ContentType
+from aiogram import Router, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
-    PreCheckoutQuery,
     Message,
     FSInputFile,
     InputMediaPhoto,
@@ -18,7 +16,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import settings
-from bot.db.buys.requests import BuysDAO
 from bot.db.users.requests import UsersDAO
 from bot.fsm.fsm import CardThreeSG
 from bot.utils.payment import generate_payment_link
