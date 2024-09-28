@@ -1,15 +1,12 @@
 import random
 from pathlib import Path
 
-from aiogram import Router, F, Bot
-from aiogram.enums import ContentType
+from aiogram import Router, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import (
     CallbackQuery,
     InlineKeyboardButton,
-    LabeledPrice,
-    PreCheckoutQuery,
     Message,
     FSInputFile,
     InputMediaPhoto,
@@ -18,14 +15,14 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import settings
-from bot.db.buys.requests import BuysDAO
 from bot.db.users.requests import UsersDAO
 from bot.fsm.fsm import CardFiveSG
+from bot.utils.payment import generate_payment_link
 
 router = Router(name="crystal_5_router")
 
 
-async def start_card_method(builder: InlineKeyboardBuilder, message: Message, state: FSMContext):
+async def start_card_method(builder: InlineKeyboardBuilder, message: Message):
     builder.row(InlineKeyboardButton(text="Я ознакомился✔️", callback_data="in_process_ok"))
 
     cards_id = list()
@@ -53,85 +50,70 @@ async def start_card_method(builder: InlineKeyboardBuilder, message: Message, st
         text="Ознакомьтесь с Вашими Кристаллами",
         reply_markup=builder.as_markup()
     )
-    await state.set_state(CardFiveSG.in_process)
 
 
 @router.callback_query(F.data == "crystal_5")
-async def crystal_5_command(callback: CallbackQuery, state: FSMContext, bot: Bot, session: AsyncSession):
+async def crystal_5_command(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.delete_reply_markup()
     info_text = ("<b>Метод 5-ти Кристаллов 💎</b>\n\n"
                  "1 Кристалл: Кристалл, необходимый для моего физического тела\n" 
                  "2 Кристалл: Кристалл, необходимый для моего эмоционального тела\n"
                  "3 Кристалл: Кристалл, необходимый для моего ментального тела\n"
                  "4 Кристалл: Первоначальная энергия, которая меня сдерживает\n"
                  "5 Кристалл: Кристалл, необходимый для моего духовного развития")
-    telegram_id = callback.message.chat.id
 
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text="Дальше ➡️", callback_data="go_next_energy_5"))
+    builder.row(InlineKeyboardButton(text="Назад", callback_data="go_back_to_menu"))
+
+    await callback.message.answer(
+        text=f"{info_text}",
+        reply_markup=builder.as_markup(),
+    )
+    await state.set_state(CardFiveSG.in_process)
+
+
+@router.callback_query(StateFilter(CardFiveSG.in_process), F.data == "go_next_energy_5")
+async def go_next_energy_handler(callback: CallbackQuery):
+    await callback.answer()
     await callback.message.delete_reply_markup()
+
+    builder = InlineKeyboardBuilder()
+    builder.row(InlineKeyboardButton(text="Дальше ➡️", callback_data="go_next_crystal_5"))
+
+    await callback.message.answer(
+        text="<b>Важность энергообмена</b>\n\n"
+             "Дорогие, во Вселенной существуют принципы энергетического обмена, благодаря которым "
+             "всё Мироздание существует и сохраняется в гармонии и балансе. "
+             "Если мы получаем энергию (через консультации или сеансы), то должны вернуть её, "
+             "чтобы сохранить гармонию, а также чтобы не включился закон сохранения баланса. "
+             "Поэтому я устанавливаю символическую цену, чтобы поддерживать энергообмен. "
+             "Таким образом мы сохраним баланс и гармонию для друг друга.\n"
+             "С любовью и заботой о Вас! ❤️\n\n"
+             "‼️По завершению у вас будет возможность поблагодарить от души в размере той суммы, которой пожелаете.",
+        reply_markup=builder.as_markup(),
+    )
+
+
+@router.callback_query(StateFilter(CardFiveSG.in_process), F.data == "go_next_crystal_5")
+async def go_next_crystal_5_handler(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
+    await callback.message.delete_reply_markup()
+
+    telegram_id = callback.message.chat.id
     user = await UsersDAO.get_user(session=session, telegram_id=telegram_id)
+
     builder = InlineKeyboardBuilder()
 
     if user.free_cards > 0:
-        builder.row(InlineKeyboardButton(text="Дальше ➡️", callback_data="go_next_crystal_5"))
-        builder.row(InlineKeyboardButton(text="Назад", callback_data="go_back_to_menu"))
+        await UsersDAO.update_user(session=session, telegram_id=telegram_id, free_cards=user.free_cards - 1)
 
         await callback.message.answer(
-            text=f"{info_text}",
-            reply_markup=builder.as_markup()
+            text="⚠️ Вы израсходовали 1 бесплатный расклад\n\n"
+                 f"<b><em>Осталось бесплатных раскладов</em></b>: {user.free_cards}"
         )
-    else:
-        builder.add(InlineKeyboardButton(text="Оплатить 150 рублей", pay=True))
-        builder.row(InlineKeyboardButton(text="Назад", callback_data="go_back_to_menu"))
-
-        await callback.message.answer(
-            text=f"{info_text}",
-        )
-        await bot.send_invoice(
-            chat_id=callback.message.chat.id,
-            title="Метод 5-ти Кристаллов 💎",
-            description="Метод 5-ти Кристаллов 💎",
-            payload="crystal_5_payment",
-            currency="rub",
-            prices=[
-                LabeledPrice(label="Метод 5-ти Кристаллов 💎", amount=15000),
-            ],
-            start_parameter="crystal_5_subscription",
-            provider_token=settings.YOOTOKEN,
-            reply_markup=builder.as_markup(),
-        )
-        await state.set_state(CardFiveSG.payment)
-    await callback.answer()
-
-
-@router.callback_query(F.data == "go_next_crystal_5")
-async def go_next_crystal_5_handler(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
-    await callback.message.delete_reply_markup()
-    telegram_id = callback.message.chat.id
-    builder = InlineKeyboardBuilder()
-
-    user = await UsersDAO.get_user(session=session, telegram_id=telegram_id)
-    await UsersDAO.update_user(session=session, telegram_id=telegram_id, free_cards=user.free_cards - 1)
-
-    await callback.message.answer(
-        text="⚠️ Вы израсходовали 1 бесплатный расклад\n\n"
-             f"<b><em>Осталось бесплатных раскладов</em></b>: {user.free_cards}"
-    )
-    await start_card_method(builder, callback.message, state)
-
-
-@router.pre_checkout_query(StateFilter(CardFiveSG.payment))
-async def pre_checkout_handler(checkout: PreCheckoutQuery, session: AsyncSession):
-    await BuysDAO.add_buy(
-        session=session,
-        telegram_id=checkout.from_user.id,
-        total_amount=int(checkout.total_amount / 100),
-    )
-    await checkout.answer(ok=True)
-
-
-@router.message(StateFilter(CardFiveSG.payment), F.content_type == ContentType.SUCCESSFUL_PAYMENT)
-async def successful_handler(message: Message, state: FSMContext):
-    builder = InlineKeyboardBuilder()
-    await start_card_method(builder, message, state)
+    await start_card_method(builder, callback.message)
 
 
 @router.callback_query(StateFilter(CardFiveSG.in_process), F.data == "in_process_ok")
@@ -165,12 +147,20 @@ async def go_crystal_5_command(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(StateFilter(CardFiveSG.ending), F.data == "ending_ok")
-async def in_process_ok_command(callback: CallbackQuery, state: FSMContext):
+async def in_process_ok_command(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
     await callback.answer()
     await callback.message.delete_reply_markup()
 
     builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text="Вернуться в главное меню", callback_data="go_to_menu"))
+    telegram_id = callback.message.chat.id
+    user = await UsersDAO.get_user(session=session, telegram_id=telegram_id)
+
+    if not user.free_cards:
+        builder.row(InlineKeyboardButton(text="Благодарность от души", callback_data="own_pay"))
+        await state.set_state(CardFiveSG.thankful)
+    else:
+        builder.row(InlineKeyboardButton(text="Вернуться в главное меню", callback_data="go_to_menu"))
+        await state.clear()
 
     await callback.message.answer(
         text="<b>Благодарность Вселенной</b>\n\n"
@@ -186,4 +176,43 @@ async def in_process_ok_command(callback: CallbackQuery, state: FSMContext):
         photo=FSInputFile(path=Path("bot/images/cards/blagodarnost.jpg")),
         reply_markup=builder.as_markup(),
     )
-    await state.clear()
+
+
+@router.callback_query(StateFilter(CardFiveSG.thankful), F.data == "own_pay")
+async def own_pay_handler(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.delete_reply_markup()
+    await callback.message.answer(
+        text="Введите любую сумму в качестве благодарности ❤️",
+    )
+
+
+@router.message(StateFilter(CardFiveSG.thankful), F.text)
+async def thankful_payment_handler(message: Message, session: AsyncSession):
+    try:
+        cost = float(message.text)
+    except ValueError:
+        await message.answer(
+            text="Я ожидаю от Вас ввода любой цифры или числа ❤️",
+        )
+    else:
+        telegram_id = message.chat.id
+        user = await UsersDAO.get_user(session=session, telegram_id=telegram_id)
+
+        url = generate_payment_link(
+            merchant_login=settings.ROBOKASSA_MERCHANT_LOGIN,
+            merchant_password_1=settings.ROBOKASSA_TEST_PWD_1,
+            cost=cost,
+            number=user.inv_number,
+            description="Метод 3-х Кристаллов",
+            shp_user_id=message.chat.id,
+        )
+
+        builder = InlineKeyboardBuilder()
+        builder.row(InlineKeyboardButton(text="Благодарность от души", url=url))
+        builder.row(InlineKeyboardButton(text="Изменить сумму 🔄", callback_data="own_pay"))
+
+        await message.answer(
+            text="По кнопке ниже можно будет отправить благодарность ❤️",
+            reply_markup=builder.as_markup(),
+        )

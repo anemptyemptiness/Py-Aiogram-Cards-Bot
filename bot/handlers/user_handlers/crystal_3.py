@@ -17,13 +17,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.config import settings
 from bot.db.users.requests import UsersDAO
 from bot.fsm.fsm import CardThreeSG
-from bot.keyboards.user_kb import create_menu_kb
 from bot.utils.payment import generate_payment_link
 
 router = Router(name="crystal_3_router")
 
 
-async def start_card_method(builder: InlineKeyboardBuilder, message: Message, state: FSMContext):
+async def start_card_method(builder: InlineKeyboardBuilder, message: Message):
     builder.row(InlineKeyboardButton(text="Я ознакомился✔️", callback_data="in_process_ok"))
 
     cards_id = list()
@@ -51,11 +50,10 @@ async def start_card_method(builder: InlineKeyboardBuilder, message: Message, st
         text="Ознакомьтесь с Вашими Кристаллами",
         reply_markup=builder.as_markup()
     )
-    await state.set_state(CardThreeSG.in_process)
 
 
 @router.callback_query(F.data == "crystal_3")
-async def crystal_3_command(callback: CallbackQuery):
+async def crystal_3_command(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.delete_reply_markup()
     info_text = ("<b>Метод 3-х Кристаллов 💎</b>\n\n"
@@ -64,16 +62,17 @@ async def crystal_3_command(callback: CallbackQuery):
                  "3 Кристалл: Кристалл, помогающий мне стабилизировать мою энергию")
 
     builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text="Дальше ➡️", callback_data="go_next_energy"))
+    builder.row(InlineKeyboardButton(text="Дальше ➡️", callback_data="go_next_energy_3"))
     builder.row(InlineKeyboardButton(text="Назад", callback_data="go_back_to_menu"))
 
     await callback.message.answer(
         text=f"{info_text}",
         reply_markup=builder.as_markup(),
     )
+    await state.set_state(CardThreeSG.in_process)
 
 
-@router.callback_query(F.data == "go_next_energy")
+@router.callback_query(StateFilter(CardThreeSG.in_process), F.data == "go_next_energy_3")
 async def go_next_energy_handler(callback: CallbackQuery):
     await callback.answer()
     await callback.message.delete_reply_markup()
@@ -90,13 +89,13 @@ async def go_next_energy_handler(callback: CallbackQuery):
              "Поэтому я устанавливаю символическую цену, чтобы поддерживать энергообмен. "
              "Таким образом мы сохраним баланс и гармонию для друг друга.\n"
              "С любовью и заботой о Вас! ❤️\n\n"
-             "‼️По завершению мы просим Вас пожертвовать какую-то сумму (текст поменяем)",
+             "‼️По завершению у вас будет возможность поблагодарить от души в размере той суммы, которой пожелаете.",
         reply_markup=builder.as_markup(),
     )
 
 
-@router.callback_query(F.data == "go_next_crystal_3")
-async def go_next_crystal_3_handler(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+@router.callback_query(StateFilter(CardThreeSG.in_process), F.data == "go_next_crystal_3")
+async def go_next_crystal_3_handler(callback: CallbackQuery, session: AsyncSession):
     await callback.answer()
     await callback.message.delete_reply_markup()
 
@@ -112,7 +111,7 @@ async def go_next_crystal_3_handler(callback: CallbackQuery, state: FSMContext, 
             text="⚠️ Вы израсходовали 1 бесплатный расклад\n\n"
                  f"<b><em>Осталось бесплатных раскладов</em></b>: {user.free_cards}"
         )
-    await start_card_method(builder, callback.message, state)
+    await start_card_method(builder, callback.message)
 
 
 @router.callback_query(StateFilter(CardThreeSG.in_process), F.data == "in_process_ok")
@@ -215,15 +214,3 @@ async def thankful_payment_handler(message: Message, session: AsyncSession):
             text="По кнопке ниже можно будет отправить благодарность ❤️",
             reply_markup=builder.as_markup(),
         )
-
-
-@router.callback_query(F.data == "go_after_payment")
-async def go_after_payment_handler(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    await callback.message.delete_reply_markup()
-
-    await callback.message.answer(
-        text="Вы находитесь в главном меню 🏡",
-        reply_markup=create_menu_kb(),
-    )
-    await state.clear()

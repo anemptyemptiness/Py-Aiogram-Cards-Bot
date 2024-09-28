@@ -14,30 +14,29 @@ class MiniDialogSG(StatesGroup):
 
 
 class CardPerDaySG(StatesGroup):
-    payment = State()
     in_process = State()
     ending = State()
+    thankful = State()
 
 
 class CardThreeSG(StatesGroup):
-    payment = State()
     in_process = State()
     ending = State()
     thankful = State()
 
 
 class CardFiveSG(StatesGroup):
-    payment = State()
     in_process = State()
     ending = State()
+    thankful = State()
 
 
 class CardQuestionSG(StatesGroup):
-    payment = State()
     waiting_for_question = State()
     ask_question = State()
     in_process = State()
     ending = State()
+    thankful = State()
 
 
 class AdminSG(StatesGroup):
