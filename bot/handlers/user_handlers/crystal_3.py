@@ -155,17 +155,9 @@ async def in_process_ok_command(callback: CallbackQuery, session: AsyncSession, 
     telegram_id = callback.message.chat.id
     user = await UsersDAO.get_user(session=session, telegram_id=telegram_id)
 
-    url = generate_payment_link(
-        merchant_login=settings.ROBOKASSA_MERCHANT_LOGIN,
-        merchant_password_1=settings.ROBOKASSA_TEST_PWD_1,
-        cost=Decimal(150),
-        number=user.inv_number,
-        description="Метод 3-х Кристаллов",
-        shp_user_id=callback.message.chat.id,
-        )
-
     if not user.free_cards:
-        builder.row(InlineKeyboardButton(text="Благодарность от души", url=url))
+        builder.row(InlineKeyboardButton(text="Благодарность от души", callback_data="own_pay"))
+        await state.set_state(CardThreeSG.thankful)
     else:
         builder.row(InlineKeyboardButton(text="Вернуться в главное меню", callback_data="go_to_menu"))
         await state.clear()
@@ -184,6 +176,46 @@ async def in_process_ok_command(callback: CallbackQuery, session: AsyncSession, 
         photo=FSInputFile(path=Path("bot/images/cards/blagodarnost.jpg")),
         reply_markup=builder.as_markup(),
     )
+
+
+@router.callback_query(StateFilter(CardThreeSG.thankful), F.data == "own_pay")
+async def own_pay_handler(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.delete_reply_markup()
+    await callback.message.answer(
+        text="Введите любую сумму в качестве благодарности ❤️",
+    )
+
+
+@router.message(StateFilter(CardThreeSG.thankful), F.text)
+async def thankful_payment_handler(message: Message, session: AsyncSession):
+    try:
+        cost = float(message.text)
+    except ValueError:
+        await message.answer(
+            text="Я ожидаю от Вас ввода любой цифры или числа ❤️",
+        )
+    else:
+        telegram_id = message.chat.id
+        user = await UsersDAO.get_user(session=session, telegram_id=telegram_id)
+
+        url = generate_payment_link(
+            merchant_login=settings.ROBOKASSA_MERCHANT_LOGIN,
+            merchant_password_1=settings.ROBOKASSA_TEST_PWD_1,
+            cost=cost,
+            number=user.inv_number,
+            description="Метод 3-х Кристаллов",
+            shp_user_id=message.chat.id,
+        )
+
+        builder = InlineKeyboardBuilder()
+        builder.row(InlineKeyboardButton(text="Благодарность от души", url=url))
+        builder.row(InlineKeyboardButton(text="Изменить сумму 🔄", callback_data="own_pay"))
+
+        await message.answer(
+            text="По кнопке ниже можно будет отправить благодарность ❤️",
+            reply_markup=builder.as_markup(),
+        )
 
 
 @router.callback_query(F.data == "go_after_payment")

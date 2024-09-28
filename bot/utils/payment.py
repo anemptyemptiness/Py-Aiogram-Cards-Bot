@@ -32,7 +32,7 @@ def check_signature_result(
     user_id: int | str,
 ) -> bool:
     signature = calculate_signature(received_sum, order_number, password, user_id)
-    # signature = calculate_signature(received_sum, order_number, password)
+
     if signature.lower() == received_signature.lower():
         return True
     return False
@@ -54,7 +54,7 @@ def generate_payment_link(
     """
     signature = calculate_signature(
         merchant_login,
-        "",
+        cost,
         number,
         merchant_password_1,
         f"Shp_userId={shp_user_id}",
@@ -62,8 +62,7 @@ def generate_payment_link(
 
     data = {
         'MerchantLogin': merchant_login,
-        'DefaultSum': cost,
-        # 'OutSum': cost,
+        'OutSum': cost,
         'InvoiceId': number,
         'Description': description,
         'SignatureValue': signature,

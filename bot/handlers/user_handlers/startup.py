@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
@@ -16,29 +14,34 @@ router = Router(name="startup_router")
 
 @router.message(CommandStart())
 async def start_first_time_handler(message: Message, session: AsyncSession, state: FSMContext):
-    user_telegram_id = message.from_user.id
-    user = await UsersDAO.get_user(session=session, telegram_id=user_telegram_id)
-    builder = InlineKeyboardBuilder()
+    current_state = (await state.get_state()).split(":")[1]
 
-    if not user:
-        builder.row(InlineKeyboardButton(text="Вперед в путешествие✨", callback_data="greeting_btn"))
-
-        await message.answer(
-            text="Приветствую  Вас, мой дорогой друг!\n\n"
-                 "Я приглашаю Вас в путешествие.\n" 
-                 "Так долго я думала над созданием этого светлого пространства.\n\n"
-                 "Однажды, создав колоду Кристаллов Крайона, я поняла, что бывают случаи, "
-                 "когда мне нужна помощь Кристаллов, но у меня  в этот момент нет под рукой карт.\n\n"
-                 "И тогда я решилась на создание этого светлого пространства.\n"
-                 "Я наполнила его светом любви и с трепетом отношусь к каждому, кто сюда зашёл.",
-            reply_markup=builder.as_markup(),
-        )
-        await UsersDAO.add_user(session=session, telegram_id=user_telegram_id, username=message.from_user.username)
-        await state.set_state(MiniDialogSG.greeting)
+    if current_state == "thankful":
+        pass
     else:
-        builder.row(InlineKeyboardButton(text="Что такое кристаллы? 💎", callback_data="what_is_crystal_btn"))
-        builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_to_menu"))
-        builder.row(InlineKeyboardButton(text="Помощь ❤️", callback_data="help_btn"))
+        user_telegram_id = message.from_user.id
+        user = await UsersDAO.get_user(session=session, telegram_id=user_telegram_id)
+        builder = InlineKeyboardBuilder()
+
+        if not user:
+            builder.row(InlineKeyboardButton(text="Вперед в путешествие✨", callback_data="greeting_btn"))
+
+            await message.answer(
+                text="Приветствую  Вас, мой дорогой друг!\n\n"
+                     "Я приглашаю Вас в путешествие.\n" 
+                     "Так долго я думала над созданием этого светлого пространства.\n\n"
+                     "Однажды, создав колоду Кристаллов Крайона, я поняла, что бывают случаи, "
+                     "когда мне нужна помощь Кристаллов, но у меня  в этот момент нет под рукой карт.\n\n"
+                     "И тогда я решилась на создание этого светлого пространства.\n"
+                     "Я наполнила его светом любви и с трепетом отношусь к каждому, кто сюда зашёл.",
+                reply_markup=builder.as_markup(),
+            )
+            await UsersDAO.add_user(session=session, telegram_id=user_telegram_id, username=message.from_user.username)
+            await state.set_state(MiniDialogSG.greeting)
+        else:
+            builder.row(InlineKeyboardButton(text="Что такое кристаллы? 💎", callback_data="what_is_crystal_btn"))
+            builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_to_menu"))
+            builder.row(InlineKeyboardButton(text="Помощь ❤️", callback_data="help_btn"))
 
         await message.answer(
             text=f'Привет, <a href="{message.from_user.url}">{message.from_user.username}</a>!',

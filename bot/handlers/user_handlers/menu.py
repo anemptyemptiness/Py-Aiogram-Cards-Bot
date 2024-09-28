@@ -12,11 +12,16 @@ router = Router(name="menu_router")
 
 
 @router.message(Command(commands="menu"))
-async def menu_command(message: Message):
-    await message.answer(
-        text="Вы находитесь в главном меню 🏡",
-        reply_markup=create_menu_kb(),
-    )
+async def menu_command(message: Message, state: FSMContext):
+    current_state = (await state.get_state()).split(":")[1]
+
+    if current_state == "thankful":
+        pass
+    else:
+        await message.answer(
+            text="Вы находитесь в главном меню 🏡",
+            reply_markup=create_menu_kb(),
+        )
 
 
 @router.callback_query(F.data == "go_to_menu")
@@ -51,14 +56,19 @@ async def go_back_to_menu_from_energy_command(callback: CallbackQuery):
 
 
 @router.message(Command(commands="consultation"))
-async def consultation_handler(message: Message):
-    await message.answer(
-        text="<b>📝Консультация</b>\n\n"
-             "Если Вам нужен индивидуальный расклад или толкования ваших Кристаллов, "
-             "Вы всегда можете написать мне.\n"
-             "С уважением, Татьяна!❤️\n\n"
-             "<b><em>Телеграм</em></b>🔗: @Butakova_T",
-    )
+async def consultation_handler(message: Message, state: FSMContext):
+    current_state = (await state.get_state()).split(":")[1]
+
+    if current_state == "thankful":
+        pass
+    else:
+        await message.answer(
+            text="<b>📝Консультация</b>\n\n"
+                 "Если Вам нужен индивидуальный расклад или толкования ваших Кристаллов, "
+                 "Вы всегда можете написать мне.\n"
+                 "С уважением, Татьяна!❤️\n\n"
+                 "<b><em>Телеграм</em></b>🔗: @Butakova_T",
+        )
 
 
 @router.message(Command(commands="support"))
@@ -73,15 +83,20 @@ async def support_handler(message: Message):
 
 
 @router.message(Command(commands="site"))
-async def site_handler(message: Message):
-    builder = InlineKeyboardBuilder()
-    builder.add(InlineKeyboardButton(text="Сайт основателя", url="https://www.shimaa.de/kristalle-der-wirklichkeit/"))
+async def site_handler(message: Message, state: FSMContext):
+    current_state = (await state.get_state()).split(":")[1]
 
-    await message.answer(
-        text="<b>🔗Сайт</b>\n\n"
-             "Ссылка на сайт основателя техники",
-        reply_markup=builder.as_markup(),
-    )
+    if current_state == "thankful":
+        pass
+    else:
+        builder = InlineKeyboardBuilder()
+        builder.add(InlineKeyboardButton(text="Сайт основателя", url="https://www.shimaa.de/kristalle-der-wirklichkeit/"))
+
+        await message.answer(
+            text="<b>🔗Сайт</b>\n\n"
+                 "Ссылка на сайт основателя техники",
+            reply_markup=builder.as_markup(),
+        )
 
 
 @router.callback_query(F.data == "energy_exchange")
@@ -106,18 +121,28 @@ async def energy_exchange_handler(callback: CallbackQuery):
 
 
 @router.message(Command(commands="oferta"))
-async def oferta_command(message: Message):
-    await message.answer_document(
-        document=FSInputFile(Path("bot/oferta/Оферта.docx")),
-    )
+async def oferta_command(message: Message, state: FSMContext):
+    current_state = (await state.get_state()).split(":")[1]
+
+    if current_state == "thankful":
+        pass
+    else:
+        await message.answer_document(
+            document=FSInputFile(Path("bot/oferta/Оферта.docx")),
+        )
 
 
 @router.message(Command(commands="rules"))
-async def rules_command(message: Message):
-    await message.answer(
-        text="🧾 <b>Правила оформления заказа:</b>\n\n"
-             "После того как вы выберете метод расклада карт и произведете оплату,"
-             " бот автоматически вышлет вам вашу карту (её расшифровку и инструкцию по использованию).\n"
-             "Если у Вас возникли вопросы, Вы всегда можете обратится в техническую поддержку.\n"
-             "Мы работаем для Вас 24/7."
-    )
+async def rules_command(message: Message, state: FSMContext):
+    current_state = (await state.get_state()).split(":")[1]
+
+    if current_state == "thankful":
+        pass
+    else:
+        await message.answer(
+            text="🧾 <b>Правила оформления заказа:</b>\n\n"
+                 "После того как вы выберете метод расклада карт и произведете оплату,"
+                 " бот автоматически вышлет вам вашу карту (её расшифровку и инструкцию по использованию).\n"
+                 "Если у Вас возникли вопросы, Вы всегда можете обратится в техническую поддержку.\n"
+                 "Мы работаем для Вас 24/7."
+        )
