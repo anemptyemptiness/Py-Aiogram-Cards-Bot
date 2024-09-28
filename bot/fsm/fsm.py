@@ -23,6 +23,7 @@ class CardThreeSG(StatesGroup):
     payment = State()
     in_process = State()
     ending = State()
+    thankful = State()
 
 
 class CardFiveSG(StatesGroup):

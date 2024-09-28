@@ -1,14 +1,13 @@
 import asyncio
 import logging
+import ipaddress
 
 import uvicorn
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.enums import ParseMode
-from fastapi import FastAPI
-from nats.aio.client import Client
-from nats.js import JetStreamContext
+from fastapi import FastAPI, Request, HTTPException
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from bot.config import settings, redis
@@ -33,6 +32,16 @@ from bot.menu_commands import set_default_commands
 from bot.utils.connect_to_nats import connect_to_nats
 from bot.utils.start_consumers import start_adv_consumer, start_payment_consumer
 from bot.services.payment.router import router as payment_app_router
+
+ALLOWED_NETWORK = ipaddress.ip_network("185.59.216.0/24")
+
+
+async def limit_ip(request: Request, call_next):
+    client_ip = ipaddress.ip_address(request.client.host)
+    if client_ip not in ALLOWED_NETWORK:
+        raise HTTPException(status_code=403, detail="Access denied")
+    response = await call_next(request)
+    return response
 
 
 async def start_uvicorn(app: FastAPI):
@@ -88,6 +97,7 @@ async def main():
     nc, js = await connect_to_nats(servers=settings.NATS_HOST)
 
     app = FastAPI()
+    app.middleware("http")(limit_ip)
     app.state.nc = nc
     app.state.js = js
     app.include_router(payment_app_router)

@@ -20,7 +20,7 @@ async def robokassa_result_url(
     js = request.app.state.js
 
     number = int(request.query_params.get("InvId"))
-    cost = request.query_params.get("OutSum")
+    cost = request.query_params.get("DefaultSum")
     signature = request.query_params.get("SignatureValue")
     user_id = request.query_params.get("Shp_userId")
 

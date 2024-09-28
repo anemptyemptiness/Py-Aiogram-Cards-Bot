@@ -23,9 +23,6 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
     if not user:
         builder.row(InlineKeyboardButton(text="Вперед в путешествие✨", callback_data="greeting_btn"))
 
-        await message.answer_document(
-            document=FSInputFile(Path("bot/oferta/Оферта.docx")),
-        )
         await message.answer(
             text="Приветствую  Вас, мой дорогой друг!\n\n"
                  "Я приглашаю Вас в путешествие.\n" 

@@ -45,7 +45,7 @@ class PaymentConsumer:
         builder = InlineKeyboardBuilder()
 
         if is_success:
-            builder.row(InlineKeyboardButton(text="Продолжить ➡️", callback_data="go_after_payment"))
+            builder.row(InlineKeyboardButton(text="◀️ В главное меню", callback_data="go_after_payment"))
 
             async with async_session() as session:
                 await BuysDAO.add_buy(

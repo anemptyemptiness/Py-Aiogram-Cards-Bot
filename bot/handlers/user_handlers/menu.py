@@ -21,23 +21,23 @@ async def menu_command(message: Message):
 
 @router.callback_query(F.data == "go_to_menu")
 async def menu_callback_button_command(callback: CallbackQuery):
+    await callback.answer()
     await callback.message.delete_reply_markup()
     await callback.message.answer(
         text="Вы находитесь в главном меню 🏡",
         reply_markup=create_menu_kb(),
     )
-    await callback.answer()
 
 
 @router.callback_query(F.data == "go_back_to_menu")
 async def go_back_to_menu_from_payment_command(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await callback.message.delete_reply_markup()
     await callback.message.answer(
         text="Вы находитесь в главном меню 🏡",
         reply_markup=create_menu_kb(),
     )
     await state.clear()
-    await callback.answer()
 
 
 @router.callback_query(F.data == "go_back_to_menu_from_energy")

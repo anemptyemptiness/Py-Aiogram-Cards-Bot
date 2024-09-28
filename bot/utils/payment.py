@@ -61,7 +61,7 @@ def generate_payment_link(
 
     data = {
         'MerchantLogin': merchant_login,
-        'OutSum': cost,
+        'DefaultSum': cost,
         'InvoiceId': number,
         'Description': description,
         'SignatureValue': signature,
