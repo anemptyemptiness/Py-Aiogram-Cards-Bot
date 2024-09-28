@@ -21,6 +21,13 @@ async def robokassa_result_url(
     cost = request.query_params.get("OutSum")
     signature = request.query_params.get("SignatureValue")
     user_id = request.query_params.get("Shp_userId")
+    print(check_signature_result(
+            number,
+            cost,
+            signature,
+            settings.ROBOKASSA_TEST_PWD_1,
+            f"Shp_userId={user_id}"
+    ))
 
     if check_signature_result(
             number,
