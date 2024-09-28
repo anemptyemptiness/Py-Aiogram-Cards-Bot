@@ -74,11 +74,11 @@ async def go_next_crystal_question_handler(callback: CallbackQuery, state: FSMCo
     user = await UsersDAO.get_user(session=session, telegram_id=telegram_id)
 
     if user.free_cards > 0:
-        await UsersDAO.update_user(session=session, telegram_id=telegram_id, free_cards=user.free_cards - 1)
+        user_free_cards = user.free_cards
 
         await callback.message.answer(
             text="⚠️ Вы израсходовали 1 бесплатный расклад\n\n"
-                 f"<b><em>Осталось бесплатных раскладов</em></b>: {user.free_cards}"
+                 f"<b><em>Осталось бесплатных раскладов</em></b>: {user_free_cards - 1}"
         )
 
     builder = InlineKeyboardBuilder()
@@ -169,6 +169,7 @@ async def in_process_ok_command(callback: CallbackQuery, session: AsyncSession, 
         builder.row(InlineKeyboardButton(text="Благодарность от души", callback_data="own_pay"))
         await state.set_state(CardQuestionSG.thankful)
     else:
+        await UsersDAO.update_user(session=session, telegram_id=telegram_id, free_cards=user.free_cards - 1)
         builder.row(InlineKeyboardButton(text="Вернуться в главное меню", callback_data="go_to_menu"))
         await state.clear()
 
