@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from bot.handlers.user_handlers.helpers import is_user_in_payment
 from bot.keyboards.user_kb import create_menu_kb
 
 router = Router(name="menu_router")
@@ -13,9 +14,7 @@ router = Router(name="menu_router")
 
 @router.message(Command(commands="menu"))
 async def menu_command(message: Message, state: FSMContext):
-    current_state = (await state.get_state()).split(":")[1]
-
-    if current_state == "thankful":
+    if await is_user_in_payment(state):
         pass
     else:
         await message.answer(
@@ -57,9 +56,7 @@ async def go_back_to_menu_from_energy_command(callback: CallbackQuery):
 
 @router.message(Command(commands="consultation"))
 async def consultation_handler(message: Message, state: FSMContext):
-    current_state = (await state.get_state()).split(":")[1]
-
-    if current_state == "thankful":
+    if await is_user_in_payment(state):
         pass
     else:
         await message.answer(
@@ -84,9 +81,7 @@ async def support_handler(message: Message):
 
 @router.message(Command(commands="site"))
 async def site_handler(message: Message, state: FSMContext):
-    current_state = (await state.get_state()).split(":")[1]
-
-    if current_state == "thankful":
+    if await is_user_in_payment(state):
         pass
     else:
         builder = InlineKeyboardBuilder()
@@ -122,9 +117,7 @@ async def energy_exchange_handler(callback: CallbackQuery):
 
 @router.message(Command(commands="oferta"))
 async def oferta_command(message: Message, state: FSMContext):
-    current_state = (await state.get_state()).split(":")[1]
-
-    if current_state == "thankful":
+    if await is_user_in_payment(state):
         pass
     else:
         await message.answer_document(
@@ -134,9 +127,7 @@ async def oferta_command(message: Message, state: FSMContext):
 
 @router.message(Command(commands="rules"))
 async def rules_command(message: Message, state: FSMContext):
-    current_state = (await state.get_state()).split(":")[1]
-
-    if current_state == "thankful":
+    if await is_user_in_payment(state):
         pass
     else:
         await message.answer(

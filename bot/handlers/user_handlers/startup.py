@@ -8,15 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.db.users.requests import UsersDAO
 from bot.fsm.fsm import MiniDialogSG
+from bot.handlers.user_handlers.helpers import is_user_in_payment
 
 router = Router(name="startup_router")
 
 
 @router.message(CommandStart())
 async def start_first_time_handler(message: Message, session: AsyncSession, state: FSMContext):
-    current_state = (await state.get_state()).split(":")[1]
-
-    if current_state == "thankful":
+    if await is_user_in_payment(state):
         pass
     else:
         user_telegram_id = message.from_user.id
