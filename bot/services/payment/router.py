@@ -28,7 +28,7 @@ async def robokassa_result_url(
             number,
             cost,
             signature,
-            settings.ROBOKASSA_TEST_PWD_2,
+            settings.ROBOKASSA_PROD_PWD_2,
             f"Shp_userId={user_id}"
     ):
         await payment_publisher(

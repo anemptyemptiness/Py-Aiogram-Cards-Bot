@@ -203,7 +203,7 @@ async def thankful_payment_handler(message: Message, session: AsyncSession):
 
         url = generate_payment_link(
             merchant_login=settings.ROBOKASSA_MERCHANT_LOGIN,
-            merchant_password_1=settings.ROBOKASSA_TEST_PWD_1,
+            merchant_password_1=settings.ROBOKASSA_PROD_PWD_1,
             cost=cost,
             number=user.inv_number,
             description="Метод 5-ти Кристаллов",

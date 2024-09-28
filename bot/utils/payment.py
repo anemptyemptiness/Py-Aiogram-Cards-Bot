@@ -46,7 +46,7 @@ def generate_payment_link(
     number: int,  # Invoice number
     description: str,  # Description of the purchase
     shp_user_id: int | str,  # User Telegram ID
-    is_test=1,
+    is_test=0,
     robokassa_payment_url='https://auth.robokassa.ru/Merchant/Index.aspx',
 ) -> str:
     """URL for redirection of the customer to the service.
