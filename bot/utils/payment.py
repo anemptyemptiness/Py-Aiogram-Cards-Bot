@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 def calculate_signature(*args) -> str:
     """Create signature MD5.
     """
+    print(':'.join(str(arg) for arg in args))
     return hashlib.md5(':'.join(str(arg) for arg in args).encode()).hexdigest()
 
 
