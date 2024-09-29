@@ -21,7 +21,6 @@ class User(Base):
         server_default=func.now(),
     )
     is_active: Mapped[bool] = mapped_column(default=True)
-    inv_number: Mapped[int] = mapped_column(default=1)
 
     buys: Mapped["Buys"] = relationship(back_populates="user", uselist=False)
 
@@ -38,3 +37,14 @@ class Buys(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="buys", uselist=False)
+
+
+class Invoices(Base):
+    __tablename__ = "invoices"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DATE(),
+        default=datetime.now(tz=timezone(timedelta(hours=3))),
+        server_default=func.now(),
+    )

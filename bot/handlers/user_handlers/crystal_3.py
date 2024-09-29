@@ -15,6 +15,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import settings
+from bot.db.invoices.requests import InvoicesDAO
 from bot.db.users.requests import UsersDAO
 from bot.fsm.fsm import CardThreeSG
 from bot.utils.payment import generate_payment_link
@@ -197,14 +198,13 @@ async def thankful_payment_handler(message: Message, session: AsyncSession):
             text="Я ожидаю от Вас ввода любой цифры или числа ❤️",
         )
     else:
-        telegram_id = message.chat.id
-        user = await UsersDAO.get_user(session=session, telegram_id=telegram_id)
+        invoice_id = await InvoicesDAO.create_invoice(session=session)
 
         url = generate_payment_link(
             merchant_login=settings.ROBOKASSA_MERCHANT_LOGIN,
             merchant_password_1=settings.ROBOKASSA_PROD_PWD_1,
             cost=cost,
-            number=user.inv_number,
+            number=invoice_id,
             description="Метод 3-х Кристаллов",
             shp_user_id=message.chat.id,
         )
