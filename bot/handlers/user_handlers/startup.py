@@ -42,15 +42,15 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
             builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_to_menu"))
             builder.row(InlineKeyboardButton(text="Помощь ❤️", callback_data="help_btn"))
 
-        if not user.username:
-            text = 'Привет!'
-        else:
-            text = f'Привет, <a href="{message.from_user.url}">{user.username}</a>!'
+            if not user.username:
+                text = 'Привет!'
+            else:
+                text = f'Привет, <a href="{message.from_user.url}">{user.username}</a>!'
 
-        await message.answer(
-            text=text,
-            reply_markup=builder.as_markup(),
-        )
+            await message.answer(
+                text=text,
+                reply_markup=builder.as_markup(),
+            )
 
 
 @router.callback_query(F.data == "go_back_to_start_cmd")
