@@ -29,7 +29,7 @@ class Buys(Base):
     __tablename__ = "buys"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="SET DEFAULT"), default=0)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     total_amount: Mapped[int] = mapped_column(default=0)
     buy_datetime: Mapped[datetime] = mapped_column(
         DATE(),
