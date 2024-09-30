@@ -42,10 +42,10 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
             builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_to_menu"))
             builder.row(InlineKeyboardButton(text="Помощь ❤️", callback_data="help_btn"))
 
-        if not message.from_user.username:
+        if not user.username:
             text = 'Привет!'
         else:
-            text = f'Привет, <a href="{message.from_user.url}">{message.from_user.username}</a>!'
+            text = f'Привет, <a href="{message.from_user.url}">{user.username}</a>!'
 
         await message.answer(
             text=text,
@@ -54,26 +54,30 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
 
 
 @router.callback_query(F.data == "go_back_to_start_cmd")
-async def go_back_to_start_cmd_handler(callback: CallbackQuery):
+async def go_back_to_start_cmd_handler(callback: CallbackQuery, session: AsyncSession):
+    await callback.answer()
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="Что такое кристаллы? 💎", callback_data="what_is_crystal_btn_startup"))
     builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_back_to_menu"))
     builder.row(InlineKeyboardButton(text="Помощь ❤️", callback_data="help_btn"))
 
-    if not callback.message.from_user.username:
+    user_telegram_id = callback.message.chat.id
+    user = await UsersDAO.get_user(session=session, telegram_id=user_telegram_id)
+
+    if not user.username:
         text = 'Привет!'
     else:
-        text = f'Привет, <a href="{callback.message.from_user.url}">{callback.message.from_user.username}</a>!'
+        text = f'Привет, <b>{user.username}</b>!'
 
     await callback.message.edit_text(
         text=text,
         reply_markup=builder.as_markup(),
     )
-    await callback.answer()
 
 
 @router.callback_query(F.data == "what_is_crystal_btn_startup")
 async def what_is_crystal_btn_startup_handler(callback: CallbackQuery):
+    await callback.answer()
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data="go_back_to_start_cmd"))
 
@@ -89,11 +93,11 @@ async def what_is_crystal_btn_startup_handler(callback: CallbackQuery):
              "ваших намерений и мыслеформ",
         reply_markup=builder.as_markup(),
     )
-    await callback.answer()
 
 
 @router.callback_query(F.data == "help_btn")
 async def help_btn_handler(callback: CallbackQuery):
+    await callback.answer()
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data="go_back_to_start_cmd"))
 
@@ -104,4 +108,3 @@ async def help_btn_handler(callback: CallbackQuery):
              "<b><em>Телеграм</em></b>🔗: @Butakova_T",
         reply_markup=builder.as_markup(),
     )
-    await callback.answer()
