@@ -38,7 +38,7 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
             await UsersDAO.add_user(session=session, telegram_id=user_telegram_id, username=message.from_user.username)
             await state.set_state(MiniDialogSG.greeting)
         else:
-            builder.row(InlineKeyboardButton(text="Что такое кристаллы? 💎", callback_data="what_is_crystal_btn"))
+            builder.row(InlineKeyboardButton(text="Что такое кристаллы? 💎", callback_data="what_is_crystal_btn_startup"))
             builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_to_menu"))
             builder.row(InlineKeyboardButton(text="Помощь ❤️", callback_data="help_btn"))
 
