@@ -42,8 +42,13 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
             builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_to_menu"))
             builder.row(InlineKeyboardButton(text="Помощь ❤️", callback_data="help_btn"))
 
+        if not message.from_user.username:
+            text = 'Привет!'
+        else:
+            text = f'Привет, <a href="{message.from_user.url}">{message.from_user.username}</a>!'
+
         await message.answer(
-            text=f'Привет, <a href="{message.from_user.url}">{message.from_user.username}</a>!',
+            text=text,
             reply_markup=builder.as_markup(),
         )
 
@@ -51,7 +56,7 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
 @router.callback_query(F.data == "go_back_to_start_cmd")
 async def go_back_to_start_cmd_handler(callback: CallbackQuery, session: AsyncSession):
     builder = InlineKeyboardBuilder()
-    builder.row(InlineKeyboardButton(text="Что такое кристаллы? 💎", callback_data="what_is_crystal_btn"))
+    builder.row(InlineKeyboardButton(text="Что такое кристаллы? 💎", callback_data="what_is_crystal_btn_startup"))
     builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_back_to_menu"))
     builder.row(InlineKeyboardButton(text="Помощь ❤️", callback_data="help_btn"))
 
@@ -64,7 +69,7 @@ async def go_back_to_start_cmd_handler(callback: CallbackQuery, session: AsyncSe
     await callback.answer()
 
 
-@router.callback_query(F.data == "what_is_crystal_btn")
+@router.callback_query(F.data == "what_is_crystal_btn_startup")
 async def what_is_crystal_btn_handler(callback: CallbackQuery):
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data="go_back_to_start_cmd"))

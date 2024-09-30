@@ -83,7 +83,7 @@ async def what_is_crystal_history_command(callback: CallbackQuery, state: FSMCon
 @router.callback_query(StateFilter(MiniDialogSG.what_is_crystal), F.data == "what_is_crystal_btn")
 async def what_is_crystal_command_again(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
-    await callback.message.edit_text(
+    await callback.message.answer(
         text="История кристаллов началась еще во времена великих Атлантов в Атлантиде.\n\n"
              "Они являются реальными проявлениями действительности, обладают великой силой, "
              "невероятной энергией и даже способностью к излечиванию. "
