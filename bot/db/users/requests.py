@@ -49,25 +49,6 @@ class UsersDAO:
         return result.scalars().all()
 
     @classmethod
-    async def get_user_info(
-            cls,
-            session: AsyncSession,
-            telegram_id: int,
-    ):
-        query = (
-            select(
-                User.created_at,
-                User.username,
-                User.free_cards,
-                User.status,
-            )
-            .where(User.telegram_id == telegram_id)
-        )
-
-        result = await session.execute(query)
-        return result.one_or_none()
-
-    @classmethod
     async def update_user(
             cls,
             session: AsyncSession,
@@ -79,5 +60,16 @@ class UsersDAO:
             .values(**kwargs)
             .where(User.telegram_id == telegram_id)
         )
+        await session.execute(stmt)
+        await session.commit()
+
+    @classmethod
+    async def add_buy_by_user(
+            cls,
+            session: AsyncSession,
+            telegram_id: int,
+    ):
+        total_cards = select(User.total_cards).where(User.telegram_id == telegram_id).scalar_subquery()
+        stmt = update(User).values(total_cards=total_cards + 1)
         await session.execute(stmt)
         await session.commit()

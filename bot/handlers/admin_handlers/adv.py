@@ -9,8 +9,15 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from nats.js import JetStreamContext
 
 from bot.config import settings
-from bot.callbacks.calendar import MonthToCallbackData, DayToCallbackData, HourToCallbackData, MinuteToCallbackData
+from bot.callbacks.calendar import (
+    YearToCallbackData,
+    MonthToCallbackData,
+    DayToCallbackData,
+    HourToCallbackData,
+    MinuteToCallbackData,
+)
 from bot.fsm.fsm import AdminSG, AdminAdvSG
+from bot.handlers.admin_handlers.utils import get_month_kb, get_day_kb
 from bot.keyboards.admin_kb import create_admin_kb
 from bot.lexicon.lexicon_ru import MONTHS, MONTH_DAYS
 from bot.services.adv.publisher import adv_publisher
@@ -75,30 +82,29 @@ async def completed_adv(message: Message, state: FSMContext, bot: Bot):
 
 
 async def start_creating_adv(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
     dt_now = datetime.now(tz=timezone(timedelta(hours=3)))
 
     builder = InlineKeyboardBuilder()
     buttons = list()
 
-    for month in range(dt_now.month, 12 + 1):
+    for year in range(dt_now.year, dt_now.year + 2):
         buttons.append(
             InlineKeyboardButton(
-                text=f"{MONTHS[month]}",
-                callback_data=MonthToCallbackData(
-                    month_to=month,
+                text=f"{year}",
+                callback_data=YearToCallbackData(
+                    year_to=year,
                 ).pack(),
             )
         )
-    builder.row(*buttons, width=3)
+    builder.row(*buttons)
     builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="cancel"))
 
     await callback.message.edit_text(
-        text="Выберите месяц, в <b>котором нужно отобразить рекламу</b>",
+        text="Выберите <b>год</b>, в <b>котором нужно отобразить рекламу</b>",
         reply_markup=builder.as_markup(),
     )
-    await state.clear()
     await state.set_state(AdminAdvSG.adv)
-    await state.update_data(year_to=dt_now.year)
 
 
 @router.callback_query(StateFilter(AdminAdvSG.adv), F.data == "cancel")
@@ -117,33 +123,32 @@ async def adm_adv_command(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
+@router.callback_query(StateFilter(AdminAdvSG.adv), YearToCallbackData.filter())
+async def select_year_to_adv_handler(
+        callback: CallbackQuery,
+        callback_data: YearToCallbackData,
+        state: FSMContext,
+):
+    await callback.answer()
+    await state.update_data(year_to=callback_data.year_to)
+
+    builder = InlineKeyboardBuilder()
+
+    await callback.message.edit_text(
+        text="Выберите <b>месяц</b>, в <b>котором нужно отобразить рекламу</b>",
+        reply_markup=get_month_kb(builder=builder, cb_data=MonthToCallbackData, date_data=await state.get_data())
+    )
+
+
 @router.callback_query(StateFilter(AdminAdvSG.adv), MonthToCallbackData.filter())
 async def select_month_to_handler(callback: CallbackQuery, callback_data: MonthToCallbackData, state: FSMContext):
-    dt_now = datetime.now(tz=timezone(timedelta(hours=3)))
     await state.update_data(month_to=callback_data.month_to)
 
     builder = InlineKeyboardBuilder()
-    buttons = list()
-
-    if callback_data.month_to == dt_now.month:
-        start_day = dt_now.day
-    else:
-        start_day = 1
-
-    for day in range(start_day, MONTH_DAYS[callback_data.month_to] + 1):
-        buttons.append(
-            InlineKeyboardButton(
-                text=f"{day}", callback_data=DayToCallbackData(
-                    day_to=day,
-                ).pack()
-            )
-        )
-    builder.add(*buttons)
-    builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="cancel"))
 
     await callback.message.edit_text(
-        text="Выберите день, в который будет отправлена реклама",
-        reply_markup=builder.as_markup(),
+        text="Выберите <b>день</b>, <b>в который будет отправлена реклама</b>",
+        reply_markup=get_day_kb(builder=builder, cb_data=DayToCallbackData, date_data=await state.get_data()),
     )
     await callback.answer()
 
@@ -157,7 +162,7 @@ async def select_day_to_handler(callback: CallbackQuery, callback_data: DayToCal
     builder = InlineKeyboardBuilder()
     buttons = list()
 
-    if data["month_to"] == dt_now.month and data["day_to"] == dt_now.day:
+    if data["year_to"] == dt_now.year and data["month_to"] == dt_now.month and data["day_to"] == dt_now.day:
         start_hour = dt_now.hour
     else:
         start_hour = 0
@@ -175,7 +180,7 @@ async def select_day_to_handler(callback: CallbackQuery, callback_data: DayToCal
     builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="cancel"))
 
     await callback.message.edit_text(
-        text="Выберите час, в который будет отправлена реклама",
+        text="Выберите <b>час</b>, <b>в который будет отправлена реклама</b>",
         reply_markup=builder.as_markup(),
     )
     await callback.answer()
@@ -190,7 +195,10 @@ async def select_hour_to_handler(callback: CallbackQuery, callback_data: HourToC
     builder = InlineKeyboardBuilder()
     buttons = list()
 
-    if data["month_to"] == dt_now.month and data["day_to"] == dt_now.day and data["hour_to"] == dt_now.hour:
+    if (data["year_to"] == dt_now.year and
+            data["month_to"] == dt_now.month and
+            data["day_to"] == dt_now.day and
+            data["hour_to"] == dt_now.hour):
         start_minute = dt_now.minute
     else:
         start_minute = 0
@@ -208,7 +216,7 @@ async def select_hour_to_handler(callback: CallbackQuery, callback_data: HourToC
     builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="cancel"))
 
     await callback.message.edit_text(
-        text="Выберите, в какую минуту нужно отправить рекламу",
+        text="Выберите, в какую <b>минуту</b> нужно <b>отправить рекламу</b>",
         reply_markup=builder.as_markup(),
     )
     await callback.answer()
@@ -226,9 +234,9 @@ async def select_minute_to_handler(callback: CallbackQuery, callback_data: Minut
 
     await callback.message.edit_text(
         text="Ваша выбранная дата:\n"
-             f"{data['day_to']} {MONTHS[data['month_to']]} {data['year_to']} "
+             f"<b>{data['day_to']} {MONTHS[data['month_to']]} {data['year_to']} "
              f"{'0' + str(data['hour_to']) if data['hour_to'] < 10 else data['hour_to']}:"
-             f"{'0' + str(data['minute_to']) if data['minute_to'] < 10 else data['minute_to']}\n\n"
+             f"{'0' + str(data['minute_to']) if data['minute_to'] < 10 else data['minute_to']}</b>\n\n"
              "Проверьте, корректно ли Вы выбрали дату?",
         reply_markup=builder.as_markup(),
     )
@@ -362,8 +370,7 @@ async def adm_adv_select_adv_text_handler(message: Message, state: FSMContext, b
         else:
             await state.update_data(count_of_pics=0)
 
-        await state.update_data(old_pics=data.get("adv_pictures", None))
-        await state.update_data(adv_text=message.text)
+        await state.update_data(old_pics=data.get("adv_pictures", None), adv_text=message.text)
         await completed_adv(message, state, bot)
     else:
         await message.answer(
@@ -387,7 +394,7 @@ async def adm_adv_completed_msg_handler(
     )
     await adv_publisher(
         js=js,
-        subject=settings.NATS_CONSUMER_SUBJECT,
+        subject=settings.NATS_CONSUMER_SUBJECT_ADV,
         dt_send=dt_send.strftime("%Y-%m-%d %H:%M"),
         text=json.dumps(data.get("adv_text")),
         pictures=json.dumps(data.get("adv_pictures", None)),

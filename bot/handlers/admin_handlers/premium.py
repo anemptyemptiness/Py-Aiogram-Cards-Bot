@@ -58,7 +58,6 @@ async def paginator(session: AsyncSession, page: int = 0):
         callback_data="number_of_pages",
     ))
     builder.row(InlineKeyboardButton(text='⬅️ Назад', callback_data='cancel'))
-
     return builder.as_markup()
 
 
@@ -75,9 +74,11 @@ async def go_back_to_adm_menu_handler(callback: CallbackQuery, state: FSMContext
 @router.callback_query(StateFilter(AdminUsersSG.check_users), F.data == "adm_user_back")
 async def go_back_to_users_list_handler(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
     page = (await state.get_data())["page"]
+    count_of_users = len(await UsersDAO.get_users(session=session))
 
     await callback.message.edit_text(
-        text="👤 Пользователи:",
+        text=f"🟢 Активных пользователей: <b>{count_of_users}</b>\n\n"
+             "👤 Пользователи:",
         reply_markup=await paginator(session=session, page=page)
     )
     await callback.answer()
@@ -90,8 +91,11 @@ async def show_number_of_pages_handler(callback: CallbackQuery):
 
 @router.callback_query(StateFilter(AdminSG.in_adm), F.data == "adm_check_users")
 async def adm_check_users_handler(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
+    count_of_users = len(await UsersDAO.get_users(session=session))
+
     await callback.message.edit_text(
-        text="👤 Пользователи:",
+        text=f"🟢 Активных пользователей: <b>{count_of_users}</b>\n\n"
+             "👤 Пользователи:",
         reply_markup=await paginator(session=session)
     )
     await state.set_state(AdminUsersSG.check_users)
@@ -103,8 +107,11 @@ async def adm_check_users_handler(callback: CallbackQuery, state: FSMContext, se
 async def pagination_handler(
         callback: CallbackQuery, callback_data: PaginationCallbackData, session: AsyncSession, state: FSMContext
 ):
+    count_of_users = len(await UsersDAO.get_users(session=session))
+
     await callback.message.edit_text(
-        text="👤 Пользователи:",
+        text=f"🟢 Активных пользователей: <b>{count_of_users}</b>\n\n"
+             "👤 Пользователи:",
         reply_markup=await paginator(session=session, page=callback_data.page)
     )
     await state.update_data(page=callback_data.page)
@@ -122,7 +129,7 @@ async def user_info_handler(
     )
     builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="adm_user_back"))
 
-    user_info = await UsersDAO.get_user_info(session=session, telegram_id=callback_data.telegram_id)
+    user_info = await UsersDAO.get_user(session=session, telegram_id=callback_data.telegram_id)
     year, month, day = user_info.created_at.strftime("%Y-%m-%d").split("-")
 
     await state.update_data(
@@ -130,12 +137,14 @@ async def user_info_handler(
         username=user_info.username,
         created_at=f"{day} {MONTHS[int(month)]} {year}",
         status=user_info.status,
+        total_cards=user_info.total_cards,
         telegram_id=callback_data.telegram_id,
     )
 
     await callback.message.edit_text(
         text=f"👤 Пользователь <b>{user_info.username}</b>\n"
              f"🗓 Зарегистрирован: {day} {MONTHS[int(month)]} {year} год\n\n"
+             f"💰 Сделано раскладов: <em>{user_info.total_cards}</em>\n"
              f"🎯 Статус: <em><b>{user_info.status}</b></em>\n"
              f"Количество бесплатных раскладов: <em><b>{user_info.free_cards}</b></em>",
         reply_markup=builder.as_markup(),
@@ -161,6 +170,7 @@ async def plus_one_free_card_handler(callback: CallbackQuery, state: FSMContext)
     await callback.message.edit_text(
         text=f"👤 Пользователь <b>{data['username']}</b>\n"
              f"🗓 Зарегистрирован: {data['created_at']} год\n\n"
+             f"💰 Сделано раскладов: <em>{data['total_cards']}</em>\n"
              f"🎯 Статус: <em><b>{data['status']}</b></em>\n"
              f"Количество бесплатных раскладов: <em><b>{free_cards}</b></em>",
         reply_markup=builder.as_markup(),
@@ -189,6 +199,7 @@ async def minus_one_free_card_handler(callback: CallbackQuery, state: FSMContext
         await callback.message.edit_text(
             text=f"👤 Пользователь <b>{data['username']}</b>\n"
                  f"🗓 Зарегистрирован: {data['created_at']} год\n\n"
+                 f"💰 Сделано раскладов: <em>{data['total_cards']}</em>\n"
                  f"🎯 Статус: <em><b>{data['status']}</b></em>\n"
                  f"Количество бесплатных раскладов: <em><b>{free_cards}</b></em>",
             reply_markup=builder.as_markup(),
@@ -215,6 +226,7 @@ async def save_new_free_card_number_handler(callback: CallbackQuery, session: As
     await callback.message.edit_text(
         text=f"👤 Пользователь <b>{data['username']}</b>\n"
              f"🗓 Зарегистрирован: {data['created_at']} год\n\n"
+             f"💰 Сделано раскладов: <em>{data['total_cards']}</em>\n"
              f"🎯 Статус: <em><b>{data['status']}</b></em>\n"
              f"Количество бесплатных раскладов: <em><b>{free_cards}</b></em>",
         reply_markup=builder.as_markup(),

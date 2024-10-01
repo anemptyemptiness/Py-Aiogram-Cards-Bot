@@ -35,9 +35,18 @@ async def connect_to_nats(servers: str | list[str]) -> tuple[Client, JetStreamCo
         storage=StorageType.FILE,
         allow_rollup_hdrs=True,
     )
+    stream_config_notify_users = StreamConfig(
+        name=settings.NATS_STREAM_NOTIFY_USERS,
+        subjects=[settings.NATS_CONSUMER_SUBJECT_NOTIFY_USERS],
+        retention=RetentionPolicy.INTEREST,
+        discard=DiscardPolicy.OLD,
+        storage=StorageType.FILE,
+        allow_rollup_hdrs=True,
+    )
 
     await js.add_stream(stream_config_adv)
     await js.add_stream(stream_config_payment)
+    await js.add_stream(stream_config_notify_users)
 
     logger.info("Successfully connect to NATS server!")
 

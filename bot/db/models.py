@@ -1,8 +1,8 @@
 from datetime import datetime, timezone, timedelta
 
-from sqlalchemy.dialects.postgresql import BIGINT, DATE, TIMESTAMP
+from sqlalchemy.dialects.postgresql import BIGINT, DATE
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, func
+from sqlalchemy import ForeignKey, func, text
 
 from bot.db.base import Base
 
@@ -15,6 +15,7 @@ class User(Base):
     status: Mapped[str] = mapped_column(default="normal")
     username: Mapped[str] = mapped_column(nullable=True)
     free_cards: Mapped[int] = mapped_column(default=3)
+    total_cards: Mapped[int] = mapped_column(default=0, server_default=text("0"))
     created_at: Mapped[datetime] = mapped_column(
         DATE(),
         default=datetime.now(tz=timezone(timedelta(hours=3))),

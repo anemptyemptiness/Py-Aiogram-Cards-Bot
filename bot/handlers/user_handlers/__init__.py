@@ -5,6 +5,7 @@ from bot.handlers.user_handlers.crystal_per_day import router as crystal_per_day
 from bot.handlers.user_handlers.crystal_3 import router as crystal_3_router
 from bot.handlers.user_handlers.crystal_5 import router as crystal_5_router
 from bot.handlers.user_handlers.crystal_answer import router as crystal_question_router
+from bot.handlers.user_handlers.gratitude import router as gratitude_router
 from bot.handlers.user_handlers.utils import router as utils_router
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "crystal_3_router",
     "crystal_5_router",
     "crystal_question_router",
+    "gratitude_router",
     "utils_router",
 ]

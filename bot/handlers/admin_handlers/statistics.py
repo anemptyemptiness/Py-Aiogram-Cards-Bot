@@ -10,75 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.callbacks.calendar import MonthFromCallbackData, DayFromCallbackData, MonthToCallbackData, DayToCallbackData
 from bot.db.buys.requests import BuysDAO
 from bot.fsm.fsm import AdminSG, AdminStatisticsSG
+from bot.handlers.admin_handlers.utils import get_month_kb, get_day_kb
 from bot.keyboards.admin_kb import create_admin_kb
-from bot.lexicon.lexicon_ru import MONTH_DAYS, MONTHS
+from bot.lexicon.lexicon_ru import MONTHS
 
 router = Router(name="statistics_router")
-
-
-def get_month_kb(
-        builder: InlineKeyboardBuilder,
-        cb_data
-):
-    buttons = list()
-
-    for month in range(1, 12 + 1):
-        if cb_data is MonthFromCallbackData:
-            buttons.append(
-                InlineKeyboardButton(
-                    text=f"{MONTHS[month]}",
-                    callback_data=cb_data(
-                        month_from=month,
-                    ).pack(),
-                )
-            )
-        else:
-            buttons.append(
-                InlineKeyboardButton(
-                    text=f"{MONTHS[month]}",
-                    callback_data=cb_data(
-                        month_to=month,
-                    ).pack(),
-                )
-            )
-    builder.row(*buttons, width=3)
-    builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="cancel"))
-
-    return builder.as_markup()
-
-
-def get_day_kb(
-        builder: InlineKeyboardBuilder,
-        date_from_data: dict,
-        cb_data
-):
-    month = date_from_data["month_from"]
-
-    if date_from_data.get("month_to", None):
-        month = date_from_data["month_to"]
-
-    for day in range(1, MONTH_DAYS[month] + 1):
-        if cb_data is DayFromCallbackData:
-            builder.add(
-                InlineKeyboardButton(
-                    text=f"{day}",
-                    callback_data=cb_data(
-                        day_from=day,
-                    ).pack()
-                )
-            )
-        else:
-            builder.add(
-                InlineKeyboardButton(
-                    text=f"{day}",
-                    callback_data=cb_data(
-                        day_to=day,
-                    ).pack()
-                )
-            )
-    builder.row(InlineKeyboardButton(text='⬅️ Назад', callback_data='cancel'))
-
-    return builder.as_markup()
 
 
 @router.callback_query(StateFilter(AdminStatisticsSG.stats), F.data == "cancel")
@@ -188,7 +124,7 @@ async def adm_stats_by_hand_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.edit_text(
         text="Выберите месяц даты, <b>от</b> которой будем собирать информацию",
-        reply_markup=get_month_kb(builder=builder, cb_data=MonthFromCallbackData),
+        reply_markup=get_month_kb(builder=builder, cb_data=MonthFromCallbackData, date_data=await state.get_data()),
     )
     await callback.answer()
 
@@ -199,11 +135,10 @@ async def adm_stats_by_hand_month_from_handler(
 ):
     builder = InlineKeyboardBuilder()
     await state.update_data(month_from=callback_data.month_from)
-    print(callback_data.month_from)
 
     await callback.message.edit_text(
         text="Выберите день <b>выбранного на предыдущем шаге</b> месяца",
-        reply_markup=get_day_kb(builder=builder, date_from_data=await state.get_data(), cb_data=DayFromCallbackData),
+        reply_markup=get_day_kb(builder=builder, cb_data=DayFromCallbackData, date_data=await state.get_data()),
     )
     await callback.answer()
 
@@ -217,7 +152,7 @@ async def adm_stats_by_hand_day_from_handler(
 
     await callback.message.edit_text(
         text="Выберите месяц даты, <b>до</b> которой будем собирать информацию",
-        reply_markup=get_month_kb(builder=builder, cb_data=MonthToCallbackData),
+        reply_markup=get_month_kb(builder=builder, cb_data=MonthToCallbackData, date_data=await state.get_data()),
     )
     await callback.answer()
 
@@ -231,7 +166,7 @@ async def adm_stats_by_hand_month_to_handler(
 
     await callback.message.edit_text(
         text="Выберите день <b>выбранного на предыдущем шаге</b> месяца",
-        reply_markup=get_day_kb(builder=builder, date_from_data=await state.get_data(), cb_data=DayToCallbackData)
+        reply_markup=get_day_kb(builder=builder, cb_data=DayToCallbackData, date_data=await state.get_data())
     )
     await callback.answer()
 

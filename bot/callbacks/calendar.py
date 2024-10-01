@@ -1,6 +1,14 @@
 from aiogram.filters.callback_data import CallbackData
 
 
+class YearFromCallbackData(CallbackData, prefix="year_from"):
+    year_from: int
+
+
+class YearToCallbackData(CallbackData, prefix="year_to"):
+    year_to: int
+
+
 class MonthFromCallbackData(CallbackData, prefix="month_from"):
     month_from: int
 

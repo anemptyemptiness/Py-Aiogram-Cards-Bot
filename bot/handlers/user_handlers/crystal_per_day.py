@@ -52,6 +52,7 @@ async def crystal_per_day_command(callback: CallbackQuery, state: FSMContext):
         text=f"{info_text}",
         reply_markup=builder.as_markup(),
     )
+    await state.clear()
     await state.set_state(CardPerDaySG.in_process)
 
 
@@ -138,11 +139,12 @@ async def in_process_ok_command(callback: CallbackQuery, session: AsyncSession, 
     telegram_id = callback.message.chat.id
     user = await UsersDAO.get_user(session=session, telegram_id=telegram_id)
 
-    if user.free_cards <= 0:
+    if not user.free_cards:
         builder.row(InlineKeyboardButton(text="Благодарность от души", callback_data="own_pay"))
         await state.set_state(CardPerDaySG.thankful)
     else:
         await UsersDAO.update_user(session=session, telegram_id=telegram_id, free_cards=user.free_cards - 1)
+        await UsersDAO.add_buy_by_user(session=session, telegram_id=telegram_id)
         builder.row(InlineKeyboardButton(text="Вернуться в главное меню", callback_data="go_to_menu"))
         await state.clear()
 

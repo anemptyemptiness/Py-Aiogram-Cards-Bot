@@ -44,7 +44,7 @@ class AdvConsumer:
         dt_send = datetime.strptime(dt_send, "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=3)))
         dt_now = datetime.now(tz=timezone(timedelta(hours=3)))
 
-        if dt_send >= dt_now:
+        if dt_send > dt_now:
             delay = (dt_send - dt_now).total_seconds()
             await msg.nak(delay=delay)
         else:

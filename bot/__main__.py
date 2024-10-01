@@ -19,17 +19,19 @@ from bot.handlers import (
     crystal_3_router,
     crystal_5_router,
     crystal_question_router,
+    gratitude_router,
     utils_router,
     admin_startup_router,
     premium_router,
     statistics_router,
     adv_router,
+    adm_notify_users_router,
 )
 from bot.middlewares.album import AlbumMiddleware
 from bot.middlewares.db import DbSessionMiddleware
 from bot.menu_commands import set_default_commands
 from bot.utils.connect_to_nats import connect_to_nats
-from bot.utils.start_consumers import start_adv_consumer, start_payment_consumer
+from bot.utils.start_consumers import start_adv_consumer, start_payment_consumer, start_notify_users_consumer
 from bot.services.payment.router import router as payment_app_router
 
 
@@ -68,6 +70,7 @@ async def main():
     dp.update.middleware(middleware=DbSessionMiddleware(session_pool=sessionmaker))
 
     dp.include_routers(
+        admin_startup_router,
         startup_router,
         mini_dialog_router,
         menu_router,
@@ -75,10 +78,11 @@ async def main():
         crystal_3_router,
         crystal_5_router,
         crystal_question_router,
-        admin_startup_router,
+        gratitude_router,
         premium_router,
         statistics_router,
         adv_router,
+        adm_notify_users_router,
         utils_router,
     )
     adv_router.message.middleware(middleware=AlbumMiddleware(wait_time_seconds=2))
@@ -115,6 +119,14 @@ async def main():
                 subject=settings.NATS_CONSUMER_SUBJECT_PAYMENT,
                 stream=settings.NATS_STREAM_PAYMENT,
                 durable_name=settings.NATS_DURABLE_NAME_PAYMENT,
+            ),
+            start_notify_users_consumer(
+                nc=nc,
+                js=js,
+                bot=bot,
+                subject=settings.NATS_CONSUMER_SUBJECT_NOTIFY_USERS,
+                stream=settings.NATS_STREAM_NOTIFY_USERS,
+                durable_name=settings.NATS_DURABLE_NAME_NOTIFY_USERS,
             ),
             start_uvicorn(app=app),
         )

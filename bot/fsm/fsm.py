@@ -39,6 +39,10 @@ class CardQuestionSG(StatesGroup):
     thankful = State()
 
 
+class GratitudeSG(StatesGroup):
+    gratitude = State()
+
+
 class AdminSG(StatesGroup):
     in_adm = State()
 
@@ -62,3 +66,8 @@ class AdminAdvSG(StatesGroup):
     adv_change_pics = State()
     adv_change_url = State()
     adv_change_url_btn_name = State()
+
+
+class AdminNotifyUsersSG(StatesGroup):
+    notify_date = State()
+    notify_text = State()

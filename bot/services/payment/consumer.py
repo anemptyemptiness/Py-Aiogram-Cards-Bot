@@ -9,6 +9,7 @@ from nats.js import JetStreamContext
 
 from bot.db.base import async_session
 from bot.db.buys.requests import BuysDAO
+from bot.db.users.requests import UsersDAO
 
 
 class PaymentConsumer:
@@ -52,6 +53,10 @@ class PaymentConsumer:
                     session=session,
                     telegram_id=user_id,
                     total_amount=total_amount,
+                )
+                await UsersDAO.add_buy_by_user(
+                    session=session,
+                    telegram_id=user_id,
                 )
 
             await self.bot.send_message(

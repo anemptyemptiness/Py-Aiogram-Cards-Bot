@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from bot.fsm.fsm import GratitudeSG
 from bot.handlers.user_handlers.helpers import is_user_in_payment
 from bot.keyboards.user_kb import create_menu_kb
 
@@ -21,16 +22,18 @@ async def menu_command(message: Message, state: FSMContext):
             text="Вы находитесь в главном меню 🏡",
             reply_markup=create_menu_kb(),
         )
+        await state.clear()
 
 
 @router.callback_query(F.data == "go_to_menu")
-async def menu_callback_button_command(callback: CallbackQuery):
+async def menu_callback_button_command(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.delete_reply_markup()
     await callback.message.answer(
         text="Вы находитесь в главном меню 🏡",
         reply_markup=create_menu_kb(),
     )
+    await state.clear()
 
 
 @router.callback_query(F.data == "go_back_to_menu")
@@ -106,3 +109,18 @@ async def rules_command(message: Message, state: FSMContext):
                  "Если у Вас возникли вопросы, Вы всегда можете обратится в техническую поддержку.\n"
                  "Мы работаем для Вас 24/7."
         )
+
+
+@router.message(Command(commands="gratitude"))
+async def gratitude_command(message: Message, state: FSMContext):
+    if await is_user_in_payment(state):
+        pass
+    else:
+        builder = InlineKeyboardBuilder()
+        builder.row(InlineKeyboardButton(text="◀️ Назад", callback_data="go_to_menu"))
+
+        await message.answer(
+            text="Введите любую сумму в качестве благодарности ❤️",
+            reply_markup=builder.as_markup(),
+        )
+        await state.set_state(GratitudeSG.gratitude)

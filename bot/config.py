@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     NATS_STREAM_PAYMENT: str
     NATS_DURABLE_NAME_PAYMENT: str
 
+    # NATS для уведомления пользователей бота
+    NATS_CONSUMER_SUBJECT_NOTIFY_USERS: str
+    NATS_STREAM_NOTIFY_USERS: str
+    NATS_DURABLE_NAME_NOTIFY_USERS: str
+
     # Данные Robokassa для оплаты
     ROBOKASSA_MERCHANT_LOGIN: str
     ROBOKASSA_TEST_PWD_1: str
