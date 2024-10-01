@@ -76,7 +76,7 @@ async def what_is_crystal_history_command(callback: CallbackQuery, state: FSMCon
                 "и даже обладает своим собственным подсознанием. "
                 "На данный период времени Кристаллы сохранились и находятся в одном из помещений "
                 "пирамиды под названием Гиза, которое еще не открыто",
-        video=FSInputFile(path=Path("bot/videos/history_video.mp4")),
+        video=FSInputFile(path=Path("bot/videos/history_video.MP4")),
         reply_markup=builder.as_markup(),
     )
     await state.set_state(MiniDialogSG.what_is_crystal)
