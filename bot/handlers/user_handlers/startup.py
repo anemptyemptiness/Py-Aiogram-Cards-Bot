@@ -86,7 +86,7 @@ async def what_is_crystal_btn_startup_handler(callback: CallbackQuery):
     builder.row(InlineKeyboardButton(text="Дальше ➡️", callback_data="go_to_second_history_msg"))
 
     await callback.message.answer_video(
-        video=FSInputFile(path=Path("bot/videos/history_video.mp4")),
+        video=FSInputFile(path=Path("bot/videos/history_video.MP4")),
         caption="История Кристаллов началась еще во времена великих Атлантов в Атлантиде.\n\n"
                 "Они являются реальными проявлениями действительности, обладают великой силой, "
                 "невероятной энергией и даже способностью к излечиванию. "
