@@ -28,7 +28,7 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
             builder.row(InlineKeyboardButton(text="Вперед в путешествие✨", callback_data="greeting_btn"))
 
             await message.answer(
-                text="Приветствую  Вас, мой дорогой друг!\n\n"
+                text="Приветствую Вас, мой дорогой друг!\n\n"
                      "Я приглашаю Вас в путешествие.\n" 
                      "Так долго я думала над созданием этого светлого пространства.\n\n"
                      "Однажды, создав колоду Кристаллов Крайона, я поняла, что бывают случаи, "
@@ -59,7 +59,7 @@ async def start_first_time_handler(message: Message, session: AsyncSession, stat
 async def go_back_to_start_cmd_handler(callback: CallbackQuery, session: AsyncSession):
     await callback.answer()
     await callback.message.delete_reply_markup()
-    
+
     builder = InlineKeyboardBuilder()
     builder.row(InlineKeyboardButton(text="Что такое кристаллы? 💎", callback_data="what_is_crystal_btn_startup"))
     builder.row(InlineKeyboardButton(text="Главное меню 🏡", callback_data="go_back_to_menu"))
