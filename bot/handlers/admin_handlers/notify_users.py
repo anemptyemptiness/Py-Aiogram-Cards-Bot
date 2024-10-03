@@ -225,3 +225,4 @@ async def adm_notify_text_correct_handler(callback: CallbackQuery, js: JetStream
              "🔒 Добро пожаловать в админ-панель!",
         reply_markup=create_admin_kb(),
     )
+    await state.set_state(AdminSG.in_adm)

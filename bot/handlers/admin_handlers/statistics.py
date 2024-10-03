@@ -7,12 +7,19 @@ from aiogram.types import CallbackQuery, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.callbacks.calendar import MonthFromCallbackData, DayFromCallbackData, MonthToCallbackData, DayToCallbackData
+from bot.callbacks.calendar import (
+    MonthFromCallbackData,
+    DayFromCallbackData,
+    MonthToCallbackData,
+    DayToCallbackData,
+    YearFromCallbackData,
+    YearToCallbackData,
+)
 from bot.db.buys.requests import BuysDAO
 from bot.fsm.fsm import AdminSG, AdminStatisticsSG
-from bot.handlers.admin_handlers.utils import get_month_kb, get_day_kb
+from bot.handlers.admin_handlers.utils import get_year_kb
 from bot.keyboards.admin_kb import create_admin_kb
-from bot.lexicon.lexicon_ru import MONTHS
+from bot.lexicon.lexicon_ru import MONTHS, MONTH_DAYS
 
 router = Router(name="statistics_router")
 
@@ -117,58 +124,145 @@ async def adm_stats_per_month_handler(callback: CallbackQuery, session: AsyncSes
 
 
 @router.callback_query(StateFilter(AdminStatisticsSG.stats), F.data == "adm_stats_by_hand")
-async def adm_stats_by_hand_handler(callback: CallbackQuery, state: FSMContext):
+async def adm_stats_by_hand_handler(callback: CallbackQuery):
+    await callback.answer()
+
     builder = InlineKeyboardBuilder()
-    dt_now = datetime.now(tz=timezone(timedelta(hours=3)))
-    await state.update_data(year_from=dt_now.year, year_to=dt_now.year)
 
     await callback.message.edit_text(
-        text="Выберите месяц даты, <b>от</b> которой будем собирать информацию",
-        reply_markup=get_month_kb(builder=builder, cb_data=MonthFromCallbackData, date_data=await state.get_data()),
+        text="Выберите <b>год</b>, <b>от которого</b> будем собирать информацию",
+        reply_markup=get_year_kb(builder=builder, cb_data=YearFromCallbackData),
     )
+
+
+@router.callback_query(StateFilter(AdminStatisticsSG.stats), YearFromCallbackData.filter())
+async def adm_stats_by_hand_year_from_handler(
+        callback: CallbackQuery,
+        callback_data: YearFromCallbackData,
+        state: FSMContext,
+):
     await callback.answer()
+    await state.update_data(year_from=callback_data.year_from)
+
+    builder = InlineKeyboardBuilder()
+    buttons = list()
+
+    for month in range(1, 12 + 1):
+        buttons.append(
+            InlineKeyboardButton(
+                text=f"{MONTHS[month]}",
+                callback_data=MonthFromCallbackData(
+                    month_from=month,
+                ).pack(),
+            )
+        )
+    builder.row(*buttons, width=3)
+    builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="cancel"))
+
+    await callback.message.edit_text(
+        text="Выберите месяц даты, <b>от которой</b> будем собирать информацию",
+        reply_markup=builder.as_markup(),
+    )
 
 
 @router.callback_query(StateFilter(AdminStatisticsSG.stats), MonthFromCallbackData.filter())
 async def adm_stats_by_hand_month_from_handler(
         callback: CallbackQuery, callback_data: MonthFromCallbackData, state: FSMContext
 ):
-    builder = InlineKeyboardBuilder()
+    await callback.answer()
     await state.update_data(month_from=callback_data.month_from)
+    builder = InlineKeyboardBuilder()
+
+    for day in range(1, MONTH_DAYS[callback_data.month_from] + 1):
+        builder.add(
+            InlineKeyboardButton(
+                text=f"{day}",
+                callback_data=DayFromCallbackData(
+                    day_from=day,
+                ).pack()
+            )
+        )
+    builder.row(InlineKeyboardButton(text='⬅️ Назад', callback_data='cancel'))
 
     await callback.message.edit_text(
         text="Выберите день <b>выбранного на предыдущем шаге</b> месяца",
-        reply_markup=get_day_kb(builder=builder, cb_data=DayFromCallbackData, date_data=await state.get_data()),
+        reply_markup=builder.as_markup(),
     )
-    await callback.answer()
 
 
 @router.callback_query(StateFilter(AdminStatisticsSG.stats), DayFromCallbackData.filter())
 async def adm_stats_by_hand_day_from_handler(
-        callback: CallbackQuery, callback_data: DayFromCallbackData, state: FSMContext
+        callback: CallbackQuery,
+        callback_data: DayFromCallbackData,
+        state: FSMContext,
 ):
-    builder = InlineKeyboardBuilder()
+    await callback.answer()
     await state.update_data(day_from=callback_data.day_from)
 
+    builder = InlineKeyboardBuilder()
+
     await callback.message.edit_text(
-        text="Выберите месяц даты, <b>до</b> которой будем собирать информацию",
-        reply_markup=get_month_kb(builder=builder, cb_data=MonthToCallbackData, date_data=await state.get_data()),
+        text="Выберите <b>год</b>, <b>до которого</b> будем собирать информацию",
+        reply_markup=get_year_kb(builder=builder, cb_data=YearToCallbackData),
     )
+
+
+@router.callback_query(StateFilter(AdminStatisticsSG.stats), YearToCallbackData.filter())
+async def adm_stats_by_hand_year_to_handler(
+        callback: CallbackQuery,
+        callback_data: YearToCallbackData,
+        state: FSMContext,
+):
     await callback.answer()
+    await state.update_data(year_to=callback_data.year_to)
+
+    builder = InlineKeyboardBuilder()
+    buttons = list()
+
+    for month in range(1, 12 + 1):
+        buttons.append(
+            InlineKeyboardButton(
+                text=f"{MONTHS[month]}",
+                callback_data=MonthToCallbackData(
+                    month_to=month,
+                ).pack(),
+            )
+        )
+    builder.row(*buttons, width=3)
+    builder.row(InlineKeyboardButton(text="⬅️ Назад", callback_data="cancel"))
+
+    await callback.message.edit_text(
+        text="Выберите месяц даты, <b>до которой</b> будем собирать информацию",
+        reply_markup=builder.as_markup(),
+    )
 
 
 @router.callback_query(StateFilter(AdminStatisticsSG.stats), MonthToCallbackData.filter())
 async def adm_stats_by_hand_month_to_handler(
-        callback: CallbackQuery, callback_data: MonthToCallbackData, state: FSMContext
+        callback: CallbackQuery,
+        callback_data: MonthToCallbackData,
+        state: FSMContext,
 ):
-    builder = InlineKeyboardBuilder()
+    await callback.answer()
     await state.update_data(month_to=callback_data.month_to)
+
+    builder = InlineKeyboardBuilder()
+
+    for day in range(1, MONTH_DAYS[callback_data.month_to] + 1):
+        builder.add(
+            InlineKeyboardButton(
+                text=f"{day}",
+                callback_data=DayToCallbackData(
+                    day_to=day,
+                ).pack()
+            )
+        )
+    builder.row(InlineKeyboardButton(text='⬅️ Назад', callback_data='cancel'))
 
     await callback.message.edit_text(
         text="Выберите день <b>выбранного на предыдущем шаге</b> месяца",
-        reply_markup=get_day_kb(builder=builder, cb_data=DayToCallbackData, date_data=await state.get_data())
+        reply_markup=builder.as_markup(),
     )
-    await callback.answer()
 
 
 @router.callback_query(StateFilter(AdminStatisticsSG.stats), DayToCallbackData.filter())
@@ -214,7 +308,7 @@ async def adm_stats_by_hand_correct_handler(callback: CallbackQuery, session: As
         year=data["year_to"],
         month=data["month_to"],
         day=data["day_to"],
-        hour=0, minute=0, second=0,
+        hour=23, minute=59, second=59,
         tzinfo=timezone(timedelta(hours=3)),
     )
 
