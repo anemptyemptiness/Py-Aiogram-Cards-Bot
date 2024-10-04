@@ -14,7 +14,7 @@ class User(Base):
     telegram_id: Mapped[int] = mapped_column(BIGINT)
     status: Mapped[str] = mapped_column(default="normal")
     username: Mapped[str] = mapped_column(nullable=True)
-    free_cards: Mapped[int] = mapped_column(default=3)
+    free_cards: Mapped[int] = mapped_column(default=0)
     total_cards: Mapped[int] = mapped_column(default=0, server_default=text("0"))
     created_at: Mapped[datetime] = mapped_column(
         DATE(),

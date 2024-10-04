@@ -75,9 +75,11 @@ async def go_back_to_adm_menu_handler(callback: CallbackQuery, state: FSMContext
 async def go_back_to_users_list_handler(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
     page = (await state.get_data())["page"]
     count_of_users = len(await UsersDAO.get_users(session=session))
+    total_cards = await UsersDAO.get_cards(session=session)
 
     await callback.message.edit_text(
-        text=f"🟢 Активных пользователей: <b>{count_of_users}</b>\n\n"
+        text=f"🟢 Активных пользователей: <b>{count_of_users}</b>\n"
+             f"💰 Суммарно раскладов: <b>{total_cards}</b>\n\n"
              "👤 Пользователи:",
         reply_markup=await paginator(session=session, page=page)
     )
@@ -92,9 +94,11 @@ async def show_number_of_pages_handler(callback: CallbackQuery):
 @router.callback_query(StateFilter(AdminSG.in_adm), F.data == "adm_check_users")
 async def adm_check_users_handler(callback: CallbackQuery, state: FSMContext, session: AsyncSession):
     count_of_users = len(await UsersDAO.get_users(session=session))
+    total_cards = await UsersDAO.get_cards(session=session)
 
     await callback.message.edit_text(
-        text=f"🟢 Активных пользователей: <b>{count_of_users}</b>\n\n"
+        text=f"🟢 Активных пользователей: <b>{count_of_users}</b>\n"
+             f"💰 Суммарно раскладов: <b>{total_cards}</b>\n\n"
              "👤 Пользователи:",
         reply_markup=await paginator(session=session)
     )
@@ -108,9 +112,11 @@ async def pagination_handler(
         callback: CallbackQuery, callback_data: PaginationCallbackData, session: AsyncSession, state: FSMContext
 ):
     count_of_users = len(await UsersDAO.get_users(session=session))
+    total_cards = await UsersDAO.get_cards(session=session)
 
     await callback.message.edit_text(
-        text=f"🟢 Активных пользователей: <b>{count_of_users}</b>\n\n"
+        text=f"🟢 Активных пользователей: <b>{count_of_users}</b>\n"
+             f"💰 Суммарно раскладов: <b>{total_cards}</b>\n\n"
              "👤 Пользователи:",
         reply_markup=await paginator(session=session, page=callback_data.page)
     )

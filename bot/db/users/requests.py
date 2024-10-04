@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -73,3 +73,12 @@ class UsersDAO:
         stmt = update(User).values(total_cards=total_cards + 1)
         await session.execute(stmt)
         await session.commit()
+
+    @classmethod
+    async def get_cards(
+            cls,
+            session: AsyncSession,
+    ):
+        query = select(func.sum(User.total_cards))
+        result = await session.execute(query)
+        return result.scalar()
