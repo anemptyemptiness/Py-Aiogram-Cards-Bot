@@ -23,6 +23,7 @@ services:
       - "5432:5432"
     env_file:
       - .env
+    command: sh /service/docker/startup_postgres.sh
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
