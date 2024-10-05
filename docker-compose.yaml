@@ -19,11 +19,12 @@ services:
     image: postgres:16
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-      - ./docker/startup_postgres.sh:/docker-entrypoint-initdb.d/startup_postgres.sh:ro
-    ports:
-      - "5432:5432"
+      - ./docker/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh:ro
     env_file:
       - .env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
