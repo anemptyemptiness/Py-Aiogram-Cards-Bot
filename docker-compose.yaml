@@ -19,6 +19,7 @@ services:
     image: postgres:latest
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+      - ./docker/startup_postgres.sh:/docker-entrypoint-initdb.d/init-user-db.sh:ro
     ports:
       - "5432:5432"
     env_file:
