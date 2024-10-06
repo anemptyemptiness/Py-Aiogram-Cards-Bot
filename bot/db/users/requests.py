@@ -70,7 +70,7 @@ class UsersDAO:
             telegram_id: int,
     ):
         total_cards = select(User.total_cards).where(User.telegram_id == telegram_id).scalar_subquery()
-        stmt = update(User).values(total_cards=total_cards + 1)
+        stmt = update(User).values(total_cards=total_cards + 1).where(User.telegram_id == telegram_id)
         await session.execute(stmt)
         await session.commit()
 
